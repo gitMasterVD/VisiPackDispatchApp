@@ -1,0 +1,374 @@
+/* ================= PAGE & CONTAINER ================= */
+/* .dispatch-page {
+  display: flex;
+  justify-content: center;
+  background-color: #f1f5f9;
+  min-height: 100vh;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+.dispatch-container {
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 16px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+} */
+ /* ================= PAGE & CONTAINER ================= */
+.dispatch-page {
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+
+  /* Background Image */
+  background-image: url('/assets/bg.jpeg'); /* public folder path */
+  background-size: cover;       /* cover entire viewport */
+  background-position: center;  /* center the image */
+  background-repeat: no-repeat;
+  background-attachment: fixed; /* stays fixed while scrolling */
+  position: relative;
+}
+
+/* Optional overlay to improve readability */
+.dispatch-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(90, 87, 87, 0.7); /* adjust opacity for readability */
+  z-index: 0; /* behind all cards */
+}
+
+.dispatch-container {
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 16px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative; /* ensure content sits above overlay */
+  z-index: 1;
+}
+
+
+/* ================= STICKY HEADER ================= */
+.sticky-header-group {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: #ffffff;
+  padding: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* ================= HEADER ================= */
+.dispatch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.dispatch-header h2 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+/* ================= HEADER ICONS ================= */
+.header-icons {
+  display: flex;
+  gap: 12px;
+}
+
+.header-icons button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 18px;
+}
+
+.btn-upload { background: #ecfdf5; color: #4aad63; border-color: #a7f3d0; }
+.btn-add { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+.btn-logout { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+
+.btn-upload:hover { background: #4aad63; color: #fff; }
+.btn-add:hover { background: #2563eb; color: #fff; }
+.btn-logout:hover { background: #dc2626; color: #fff; }
+
+.header-icons button:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+/* ================= SEARCH & FILTER ================= */
+.search-filter-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  overflow: visible;
+}
+
+.search-box {
+  flex: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  padding: 0 12px;
+  height: 45px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.search-box input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 15px;
+  color: #1e293b;
+}
+
+/* ================= PRIORITY DROPDOWN ================= */
+.priority-dropdown {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  height: 45px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  cursor: pointer;
+  gap: 6px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.priority-dropdown .dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.dropdown-options {
+  position: absolute;
+  top: 52px;
+  left: 0;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 2000;
+}
+
+.dropdown-option {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.2s;
+}
+
+.dropdown-option:last-child { border-bottom: none; }
+.dropdown-option:hover { background: #3b82f6; color: #fff; }
+
+/* ================= TABS ================= */
+.tabs.pill {
+  display: flex;
+  background: #e2e8f0;
+  padding: 5px;
+  border-radius: 12px;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.tabs.pill button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.tabs.pill button.active {
+  background: #ffffff;
+  color: #2563eb;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* ================= DISPATCH CARDS ================= */
+.dispatch-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 14px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.dispatch-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* CARD TOP */
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.card-top h3 {
+  font-size: 17px;
+  margin: 0;
+  color: #0f172a;
+}
+
+.card-top p {
+  font-size: 13px;
+  margin: 2px 0;
+  color: #64748b;
+}
+
+/* PRIORITY BADGE */
+.badge-priority {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 27px;
+  padding: 0 6px;
+  border-radius: 46%;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  gap: 4px;
+}
+
+.badge-priority.p1 { background: #dc2626; }
+.badge-priority.p2 { background: #f97316; }
+.badge-priority.p3 { background: #16a34a; }
+
+/* CARD BOTTOM GRID */
+.card-bottom-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3-column even on mobile */
+  gap: 12px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+.card-bottom-grid label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-bottom-grid span {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  word-break: break-word;
+}
+
+/* ================= CARD BOTTOM GRID ICON COLORS ================= */
+.card-bottom-grid label svg {
+  flex-shrink: 0;
+  font-size: 16px; /* optional, consistent icon size */
+}
+
+/* Assign specific colors based on icon type */
+.card-bottom-grid label svg.calendar-icon { color: #2563eb; }  /* blue for Date/Time */
+.card-bottom-grid label svg.quantity-icon { color: #f97316; }  /* orange for Quantity */
+.card-bottom-grid label svg.location-icon { color: #16a34a; }  /* green for Location */
+
+
+/* ================= EMPTY STATE ================= */
+
+/* ================= EMPTY STATE CARD ================= */
+.empty-state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 500px;           /* Minimum height to prevent flicker */
+  padding: 40px 20px;
+  margin-bottom: 14px;
+  background: #ffffff;          /* Card background */
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  text-align: center;
+  flex: 1;
+}
+
+.empty-state-container h3 {
+  font-size: 20px;
+  margin: 16px 0 8px;
+  color: #0f172a;
+}
+
+.empty-state-container p {
+  font-size: 14px;
+  color: #475569;
+}
+
+.empty-state-container svg {
+  color: #94a3b8;
+  margin-bottom: 12px;
+}
+
+
+/* ================= SCROLLBAR ================= */
+.dispatch-list-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 0;
+  min-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #f1f5f9;
+}
+
+.dispatch-list-body::-webkit-scrollbar { width: 6px; }
+.dispatch-list-body::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 12px; }
+.dispatch-list-body::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 12px; }
+
+/* ================= MOBILE ================= */
+@media screen and (max-width: 640px) {
+  .dispatch-header h2 { font-size: 24px; }
+  .card-top h3 { font-size: 17px; }
+  .card-top p, .card-bottom-grid span { font-size: 13px; }
+  /* Keep 3-column grid even on mobile */
+  .card-bottom-grid { grid-template-columns: repeat(3, 1fr); }
+}

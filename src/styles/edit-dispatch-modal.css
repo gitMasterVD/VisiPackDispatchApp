@@ -1,0 +1,242 @@
+/* OVERLAY */
+.edit-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* MODAL */
+.edit-sheet {
+  width: 100%;
+  max-width: 480px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 20px 40px rgba(0,0,0,.25);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  animation: slideUp .25s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* HEADER */
+.edit-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 20px;
+}
+.edit-header h2 { font-size: 20px;font-weight: 700; margin: 0; }
+.edit-close {
+  background: #f1f5f9;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* BODY */
+.edit-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.edit-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.edit-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  width: 100%;
+}
+
+.edit-group label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* INPUTS */
+.edit-input,
+.edit-group input,
+.edit-group textarea,
+.edit-dropdown {
+  width: 100%;
+  height: 44px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  background: #fff;
+}
+
+
+/* DATE TIME WRAPPER */
+.edit-datetime {
+  display: flex;
+  gap: 10px;
+}
+
+.edit-datetime .edit-input {
+  flex: 1;
+}
+
+/* DROPDOWN */
+.edit-dropdown {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.edit-dropdown-menu {
+  position: absolute;
+  width: 100%;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 12px 28px rgba(0,0,0,.15);
+  z-index: 3000;
+}
+
+.edit-dropdown-menu.down { top: calc(100% + 6px); }
+.edit-dropdown-menu.up { bottom: calc(100% + 6px); }
+
+
+/* STATUS DROPDOWN ITEM HOVER */
+/* .edit-dropdown-item {
+  padding: 12px;
+  cursor: pointer;
+  border-radius: 6px; 
+  transition: background 0.2s, color 0.2s;
+} */
+
+
+/* STATUS DROPDOWN ITEM HOVER - Edit Modal */
+.edit-dropdown-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b; /* dark text for options */
+  transition: background 0.2s, color 0.2s;
+  border-radius: 8px; /* subtle rounding like Add Dispatch */
+  border-bottom: 1px solid #f1f5f9; /* separator */
+}
+
+.edit-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.edit-dropdown-item:hover {
+  background-color: #3b82f6;
+  color: #ffffff;
+  border-radius: 8px;
+}
+
+
+
+/* PRIORITY SLIDER */
+.priority-slider {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: #f1f5f9;
+  border-radius: 10px;
+  height: 45px;
+  padding: 4px;
+}
+.priority-btn {
+  border: none;
+  background: transparent;
+  z-index: 2;
+  font-weight: 600;
+  cursor: pointer;
+}
+.priority-indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: calc(100% / 3 - 8px);
+  border-radius: 10px;
+  transition: transform .25s ease, background .25s ease;
+}
+.priority-indicator.p1 { transform: translateX(0%); background: #dc2626; }
+.priority-indicator.p2 { transform: translateX(100%); background: #f59e0b; }
+.priority-indicator.p3 { transform: translateX(200%); background: #16a34a; }
+.priority-btn.active { color: #fff; }
+
+/* FOOTER */
+.edit-footer {
+  display: flex;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid #e5e7eb;
+}
+.btn-primary {
+  flex: 1;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 12px;
+}
+.btn-secondary {
+  flex: 1;
+  background: #f1f5f9;
+  border: none;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+/* MOBILE */
+@media (max-width: 640px) {
+  .edit-sheet { border-radius: 20px 20px 0 0; max-width: 100%; }
+  .edit-datetime { grid-template-columns: 1fr 1fr; }
+}
+/* Date & Time Input Focus */
+.edit-datetime .react-datepicker-wrapper input:focus {
+  outline: none;
+  border-color: #2563eb; /* your blue */
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+.edit-close {
+  background: #f1f5f9;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px; /* adjust if needed */
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+@media (max-width: 640px) {
+  .edit-sheet {
+    position: fixed;
+    bottom: 0;     /* stick to bottom */
+    left: 0;
+    right: 0;
+    margin: 0;
+    max-height: 80vh;
+  }
+}

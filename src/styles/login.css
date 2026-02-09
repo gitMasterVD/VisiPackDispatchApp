@@ -1,0 +1,224 @@
+/* ===================== GLOBAL RESET ===================== */
+/* * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background: #f4f6f8;
+} */
+
+/* ===================== LOGIN WRAPPER ===================== */
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+
+  /* Optional background image */
+  /* Uncomment if you want bg */
+  /* background-image: url('/assets/bg.jpeg'); */
+  /* background-size: cover; */
+  /* background-position: center; */
+  /* background-repeat: no-repeat; */
+}
+
+/* ===================== LOGIN CARD ===================== */
+.login-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 30px 25px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  position: relative;
+}
+
+/* ===================== LOGO ===================== */
+.logo-circle {
+  width: 70px;
+  height: 70px;
+  background: #e8f1ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  margin: 0 auto 20px auto;
+}
+
+/* ===================== HEADING ===================== */
+h1 {
+  margin-bottom: 5px;
+  font-size: 24px;
+  color: #0f172a;
+}
+
+.subtitle {
+  color: #6c757d;
+  margin-bottom: 30px;
+  font-size: 14px;
+}
+
+/* ===================== FORM GROUP ===================== */
+.form-group {
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* ===================== INPUT BOX ===================== */
+.input-box {
+  display: flex;
+  align-items: center;
+  background: #f8f9fb;
+  border-radius: 14px;
+  padding: 12px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.input-box input {
+  border: none;
+  background: transparent;
+  flex: 1;
+  font-size: 14px;
+  outline: none;
+}
+
+.input-box .icon {
+  margin-right: 10px;
+  font-size: 16px;
+  color: #2563eb; /* lock icon color */
+  flex-shrink: 0;
+}
+
+.input-box .eye {
+  cursor: pointer;
+  margin-left: 10px;
+  color: #64748b;
+  transition: color 0.2s;
+}
+
+.input-box .eye:hover {
+  color: #1e7bff;
+}
+
+/* Input focus effect */
+.input-box input:focus {
+  outline: none;
+}
+
+.input-box:focus-within {
+  border: 1.5px solid #1e7bff;
+}
+
+/* Error styles */
+.input-box.error {
+  border: 1.5px solid #e63946;
+}
+
+.field-error {
+  color: #e63946;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
+/* ===================== BUTTONS ===================== */
+.login-btn {
+  width: 100%;
+  background: #1e7bff;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.login-btn:hover {
+  background: #1667d6;
+}
+
+.google-btn {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  padding: 14px;
+  border-radius: 14px;
+  font-weight: 600;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+
+.google-btn:hover {
+  border-color: #bbb;
+}
+
+/* Divider */
+.divider {
+  margin: 25px 0;
+  color: #999;
+  font-size: 14px;
+}
+
+/* ===================== SUCCESS MESSAGE ===================== */
+.success-message {
+  background: #e6f4ea;
+  color: #1e7b34;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+/* ===================== FOCUS STYLES ===================== */
+.login-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(13, 187, 30, 0.6);
+}
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 420px) {
+  .login-card {
+    padding: 25px 15px;
+  }
+
+  .logo-circle {
+    width: 60px;
+    height: 60px;
+    font-size: 26px;
+    margin-bottom: 15px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+
+  .login-btn,
+  .google-btn {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .input-box {
+    padding: 10px;
+  }
+}
