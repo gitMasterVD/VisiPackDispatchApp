@@ -96,7 +96,7 @@ const AddDispatch = () => {
           <div className="back-arrow" onClick={() => window.history.back()}>
             <FiArrowLeft size={20} />
           </div>
-          <h3 className="dispatch-card-title">Add New Dispatch</h3>
+          <h3 className="dispatch-card-title">Add New Dispatch Item</h3>
         </div>
 
         <div className="dispatch-card-form">
