@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { useState} from "react";
 import type { FormEvent } from "react";
+
+
 import { useNavigate } from "react-router-dom";
 import "../styles/login.css";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+
+// ✅ Define possible roles for your POC
+type UserRole = "superuser" | "plantManager" | "fg" | "qc" | "dispatch" | "finance";
 
 interface LoginErrors {
   email: string;
@@ -16,40 +21,63 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [errors, setErrors] = useState<LoginErrors>({ email: "", password: "" });
 
-  const [errors, setErrors] = useState<LoginErrors>({
-    email: "",
-    password: "",
-  });
+  // ✅ Mock login function (POC-ready)
+  const mockLogin = async (email: string, password: string): Promise<{ token: string; role: UserRole }> => {
+    // You can map emails to different roles for testing
+    const roleMap: Record<string, UserRole> = {
+      "superuser@example.com": "superuser",
+      "plant@example.com": "plantManager",
+      "fg@example.com": "fg",
+      "qc@example.com": "qc",
+      "dispatch@example.com": "dispatch",
+      "finance@example.com": "finance",
+    };
 
-  const handleSubmit = (e: FormEvent) => {
+    // Simple validation
+    if (!roleMap[email] || password !== "123456") {
+      throw new Error("Invalid credentials");
+    }
+
+    // Return mock token and role
+    return {
+      token: "mockToken123",
+      role: roleMap[email],
+    };
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
+    // ✅ Validation
     const newErrors: LoginErrors = { email: "", password: "" };
-
-    // ✅ STRICT email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!email) {
-      newErrors.email = "Email is required";
-    } else if (!emailRegex.test(email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
+    if (!email) newErrors.email = "Email is required";
+    else if (!emailRegex.test(email)) newErrors.email = "Enter valid email";
 
-    if (!password) {
-      newErrors.password = "Password is required";
-    }
+    if (!password) newErrors.password = "Password is required";
 
     setErrors(newErrors);
-
     if (newErrors.email || newErrors.password) return;
 
-    // ✅ POC success flow (backend-ready)
-    setSuccessMessage("Login successful. Redirecting to dispatch list...");
+    try {
+      const response = await mockLogin(email, password);
 
-    setTimeout(() => {
-      navigate("/dispatches");
-    }, 1200);
+      // ✅ Save token & role in sessionStorage
+      sessionStorage.setItem("token", response.token);
+      sessionStorage.setItem("role", response.role);
+
+      setSuccessMessage(`Login successful as ${response.role}. Redirecting...`);
+
+      setTimeout(() => {
+        navigate("/dispatches"); // redirect to dispatch list page
+      }, 1000);
+    } catch (err) {
+      console.error(err);
+      setErrors({ email: "", password: "Login failed. Check credentials." });
+    }
   };
 
   return (
@@ -60,9 +88,7 @@ const Login: React.FC = () => {
         <h1>Welcome!</h1>
         <p className="subtitle">Log in to manage your dispatches</p>
 
-        {successMessage && (
-          <div className="success-message">{successMessage}</div>
-        )}
+        {successMessage && <div className="success-message">{successMessage}</div>}
 
         <form onSubmit={handleSubmit} noValidate>
           {/* Email */}
@@ -81,55 +107,41 @@ const Login: React.FC = () => {
                 }}
               />
             </div>
-            {errors.email && (
-              <span className="field-error">{errors.email}</span>
-            )}
+            {errors.email && <span className="field-error">{errors.email}</span>}
           </div>
 
           {/* Password */}
-        <div className="form-group">
-  <label>Password</label>
-  <div className={`input-box ${errors.password ? "error" : ""}`}>
-    {/* Lock icon */}
-    <span className="icon">🔒</span>
-
-    {/* Password input */}
-    <input
-      type={showPassword ? "text" : "password"}
-      required
-      placeholder="Enter your password"
-      value={password}
-      onChange={(e) => {
-        setPassword(e.target.value);
-        setErrors({ ...errors, password: "" });
-      }}
-    />
-
-    {/* Eye toggle */}
-    <span
-      className="eye"
-      onClick={() => setShowPassword(!showPassword)}
-      title={showPassword ? "Hide password" : "Show password"}
-    >
-      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-    </span>
-  </div>
-
-  {/* Error message */}
-  {errors.password && (
-    <span className="field-error">{errors.password}</span>
-  )}
-</div>
-
+          <div className="form-group">
+            <label>Password</label>
+            <div className={`input-box ${errors.password ? "error" : ""}`}>
+              <span className="icon">🔒</span>
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setErrors({ ...errors, password: "" });
+                }}
+              />
+              <span
+                className="eye"
+                onClick={() => setShowPassword(!showPassword)}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </span>
+            </div>
+            {errors.password && <span className="field-error">{errors.password}</span>}
+          </div>
 
           <button className="login-btn">Log In →</button>
         </form>
 
         <div className="divider">or</div>
 
-        <button className="google-btn">
-          🛡️ Continue with Google
-        </button>
+        <button className="google-btn">🛡️ Continue with Google</button>
       </div>
     </div>
   );

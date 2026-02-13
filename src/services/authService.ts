@@ -7,9 +7,13 @@ export interface LoginPayload {
   password: string;
 }
 
+
 export interface LoginResponse {
   token: string;
+  role: "superuser" | "plantManager" | "fg" | "qc" | "dispatch" | "finance"; // or string for POC
 }
+
+
 
 export const loginUser = async (
   payload: LoginPayload

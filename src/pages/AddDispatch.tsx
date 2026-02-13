@@ -7,6 +7,9 @@ import { Button } from "primereact/button";
 import { FiArrowLeft, FiChevronDown } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 
+// ✅ import addDispatch from service
+import { addDispatch } from "../services/dispatchService";
+
 const statusOptions: string[] = ["Need Confirmation", "Closed"];
 const priorityOptions: string[] = ["P1 - High", "P2 - Medium", "P3 - Low"];
 
@@ -61,12 +64,11 @@ const AddDispatch = () => {
     setPriorityOpen(!priorityOpen);
   };
 
-  // Calculate flip dynamically
   const handleDateOpen = () => {
     if (dateRef.current) {
       const rect = dateRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      const calendarHeight = 280; // approximate height of datepicker
+      const calendarHeight = 280;
       setDatePopper(spaceBelow < calendarHeight ? "top-start" : "bottom-start");
     }
   };
@@ -80,13 +82,40 @@ const AddDispatch = () => {
     }
   };
 
-  const handleSave = () => {
+  // ✅ BACKEND-READY SAVE
+  const handleSave = async () => {
     if (!client || !po || !quantity) {
       alert("Please fill mandatory fields");
       return;
     }
 
-    console.log({ client, po, item, date, time, quantity, location, status, priority });
+    try {
+      const saved = await addDispatch({
+        client,
+        po,
+        code: item,
+        quantity,
+        location,
+        status: status as "Need Confirmation" | "Closed" | "NIA",
+        priority: priority.split(" ")[0] as "P1" | "P2" | "P3",
+        date: date
+          ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+          : "",
+        time: time
+          ? `${String(time.getHours()).padStart(2, "0")}:${String(time.getMinutes()).padStart(2, "0")}`
+          : "",
+      });
+
+      alert("Dispatch saved successfully!");
+      console.log("Saved dispatch:", saved);
+
+      // ✅ Optional: Reset form
+      setClient(""); setPo(""); setItem(""); setQuantity(""); setLocation("");
+      setStatus("Need Confirmation"); setPriority("P1 - High"); setDate(new Date()); setTime(new Date());
+    } catch (err) {
+      console.error("Failed to save dispatch", err);
+      alert("Failed to save dispatch. Please try again.");
+    }
   };
 
   return (
@@ -96,7 +125,7 @@ const AddDispatch = () => {
           <div className="back-arrow" onClick={() => window.history.back()}>
             <FiArrowLeft size={20} />
           </div>
-          <h3 className="dispatch-card-title">Add New Dispatch Item</h3>
+          <h3 className="dispatch-card-title">Add New Dispatch</h3>
         </div>
 
         <div className="dispatch-card-form">
@@ -156,12 +185,11 @@ const AddDispatch = () => {
             </div>
           </div>
 
-          {/* Status / Priority Dropdowns */}
           <div className="form-row">
             <div ref={statusRef}>
               <label>Status</label>
-              <div className="priority-dropdown">
-                <div className="dropdown-header" onClick={toggleStatusDropdown}>
+              <div className="priority-dropdown" onClick={toggleStatusDropdown}>
+                <div className="dropdown-header">
                   <span>{status}</span>
                   <FiChevronDown style={{ marginLeft: "auto", transform: statusOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "0.2s" }} size={14} />
                 </div>
@@ -177,8 +205,8 @@ const AddDispatch = () => {
 
             <div ref={priorityRef}>
               <label>Priority</label>
-              <div className="priority-dropdown">
-                <div className="dropdown-header" onClick={togglePriorityDropdown}>
+              <div className="priority-dropdown" onClick={togglePriorityDropdown}>
+                <div className="dropdown-header">
                   <span>{priority}</span>
                   <FiChevronDown style={{ marginLeft: "auto", transform: priorityOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "0.2s" }} size={14} />
                 </div>

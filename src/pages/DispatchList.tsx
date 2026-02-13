@@ -1,18 +1,24 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react"; 
+import { getDispatches, updateDispatch, addDispatch } from "../services/dispatchService";
 import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
 import "../styles/dispatch-list.css";
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUpload, faPlus, faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
-
-import { mockDispatches } from "../data/mockDispatches";
 import type { Dispatch, Priority } from "../data/mockDispatches";
-
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import DispatchDetailsOverlay from "../components/dispatch/DispatchDetailsOverlay";
 import EditDispatchModal from "../components/dispatch/EditDispatchModal";
-
-import { FiSearch, FiInbox, FiChevronDown, FiAlertTriangle, FiCalendar, FiPackage, FiMapPin } from "react-icons/fi";
+import {
+  FiSearch,
+  FiInbox,
+  FiChevronDown,
+  FiAlertTriangle,
+  FiCalendar,
+  FiPackage,
+  FiMapPin,
+} from "react-icons/fi";
 
 /* ================= PRIORITY CONFIG ================= */
 const priorityOrder: Record<Priority, number> = { P1: 1, P2: 2, P3: 3 };
@@ -25,47 +31,88 @@ const priorityLabels: Record<Priority, string> = {
 
 const TO_BE_UPDATED = "To be updated";
 
+/* ================= DATE HELPERS ================= */
+const normalizeDate = (value: any): string => {
+  if (!value) return "";
+  if (typeof value === "number") {
+    const excelEpoch = new Date(1899, 11, 30);
+    const jsDate = new Date(excelEpoch.getTime() + value * 86400000);
+    return jsDate.toISOString().split("T")[0];
+  }
+  if (value instanceof Date) return value.toISOString().split("T")[0];
+  const str = String(value).trim();
+  const match = str.match(/^(\d{2})[.\-/](\d{2})[.\-/](\d{4})$/);
+  if (match) return `${match[3]}-${match[2]}-${match[1]}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  return "";
+};
+
+const formatDisplayDate = (value: string) => {
+  if (!value || value === TO_BE_UPDATED) return TO_BE_UPDATED;
+  if (/^\d{2}\.\d{2}\.\d{4}$/.test(value)) return value;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split("-");
+    return `${day}.${month}.${year}`;
+  }
+  return value;
+};
+
 /* ================= COMPONENT ================= */
 const DispatchList: React.FC = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const [dispatches, setDispatches] = useState<Dispatch[]>(mockDispatches);
+  const [dispatches, setDispatches] = useState<Dispatch[]>([]);
+  const [loading, setLoading] = useState(true); // ✅ Loading state
   const [search, setSearch] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<"All" | Priority>("All");
   const [activeTab, setActiveTab] = useState<"Need Confirmation" | "Closed">("Need Confirmation");
+  const [selectedDate, setSelectedDate] = useState("");
 
   const [selectedDispatch, setSelectedDispatch] = useState<Dispatch | null>(null);
   const [editDispatch, setEditDispatch] = useState<Dispatch | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  /* ================= TAB STATUS MAP ================= */
   const tabStatusMap: Record<"Need Confirmation" | "Closed", Dispatch["status"][]> = {
-    "Need Confirmation": ["Need Confirmation", "NIA"],
+    "Need Confirmation": ["Need Confirmation"],
     Closed: ["Closed"],
   };
 
-  /* ================= HELPERS ================= */
   const validate = (val: any) =>
-    val === undefined || val === null || String(val).trim() === "" ? TO_BE_UPDATED : String(val).trim();
+    val === undefined || val === null || String(val).trim() === ""
+      ? TO_BE_UPDATED
+      : String(val).trim();
+
+  /* ================= LOAD DISPATCHES ================= */
+  useEffect(() => {
+    const fetchDispatches = async () => {
+      try {
+        const data = await getDispatches();
+        setDispatches(data);
+      } catch (error) {
+        console.error("Failed to fetch dispatches", error);
+      } finally {
+        setLoading(false); // ✅ Set loading false after fetch
+      }
+    };
+    fetchDispatches();
+  }, []);
 
   /* ================= FILE UPLOAD ================= */
   const handleUploadClick = () => fileInputRef.current?.click();
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const data = new Uint8Array(event.target?.result as ArrayBuffer);
       const workbook = XLSX.read(data, { type: "array" });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
-      const parsed: Dispatch[] = rows.map((row, index) => ({
-        id: Date.now() + index,
+      const parsed: Omit<Dispatch, "id">[] = rows.map((row) => ({
         code: validate(row["Item Name"]),
         po: validate(row["PoNo"]),
         client: validate(row["Client"]),
@@ -73,22 +120,29 @@ const DispatchList: React.FC = () => {
         status:
           row["Dispatch Status"] === "Closed"
             ? "Closed"
-            : row["Dispatch Status"] === "NIA"
-            ? "NIA"
             : "Need Confirmation",
-        date: validate(row["Expected DelDate"]),
+        date: normalizeDate(row["Expected DelDate"]) || TO_BE_UPDATED,
         time: validate(row["Time"]),
         quantity: validate(row["QTY"]),
         location: validate(row["Location/Vechile Details"]),
       }));
 
-      setDispatches(parsed);
+      try {
+        const savedDispatches: Dispatch[] = [];
+        for (const d of parsed) {
+          const saved = await addDispatch(d);
+          savedDispatches.push(saved);
+        }
+        setDispatches((prev) => [...prev, ...savedDispatches]);
+      } catch (error) {
+        console.error("Failed to upload dispatches", error);
+        alert("Failed to upload dispatches. Please try again.");
+      }
     };
-
     reader.readAsArrayBuffer(file);
   };
 
-  /* ================= FILTER & SORT ================= */
+  /* ================= FILTER ================= */
   const filteredDispatches = React.useMemo(() => {
     return dispatches
       .filter(
@@ -98,10 +152,15 @@ const DispatchList: React.FC = () => {
       )
       .filter((d) => tabStatusMap[activeTab].includes(d.status))
       .filter((d) => selectedPriority === "All" || d.priority === selectedPriority)
+      .filter((d) => {
+        if (!selectedDate) return true;
+        if (!d.date || d.date === TO_BE_UPDATED) return false;
+        return normalizeDate(d.date) === selectedDate;
+      })
       .sort((a, b) =>
         selectedPriority === "All" ? priorityOrder[a.priority] - priorityOrder[b.priority] : 0
       );
-  }, [dispatches, search, activeTab, selectedPriority]);
+  }, [dispatches, search, activeTab, selectedPriority, selectedDate]);
 
   /* ================= OUTSIDE CLICK ================= */
   useEffect(() => {
@@ -114,31 +173,26 @@ const DispatchList: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  /* ================= RENDER ================= */
+  /* ================= UI ================= */
   return (
     <div className="dispatch-page">
       <div className="dispatch-container">
-        {/* ================= HEADER ================= */}
         <div className="sticky-header-group">
           <div className="dispatch-header">
             <h2>Dispatches</h2>
-
             <div className="header-icons">
               <button className="btn-upload" onClick={handleUploadClick}>
                 <FontAwesomeIcon icon={faUpload} />
               </button>
-
               <button className="btn-add" onClick={() => navigate("/add-dispatch")}>
                 <FontAwesomeIcon icon={faPlus} />
               </button>
-
               <button className="btn-logout" onClick={() => navigate("/")}>
                 <FontAwesomeIcon icon={faRightFromBracket} />
               </button>
             </div>
           </div>
 
-          {/* ================= SEARCH + FILTER ================= */}
           <div className="search-filter-row modern">
             <div className="search-box">
               <FiSearch />
@@ -154,7 +208,6 @@ const DispatchList: React.FC = () => {
                 <span>{selectedPriority === "All" ? "Priority" : priorityLabels[selectedPriority]}</span>
                 <FiChevronDown />
               </div>
-
               {dropdownOpen && (
                 <div className="dropdown-options">
                   <div
@@ -181,9 +234,21 @@ const DispatchList: React.FC = () => {
                 </div>
               )}
             </div>
+
+            <div className="date-filter">
+              <FiCalendar />
+              <DatePicker
+                selected={selectedDate ? new Date(selectedDate) : null}
+                onChange={(date: Date | null) =>
+                  setSelectedDate(date ? date.toISOString().split("T")[0] : "")
+                }
+                dateFormat="dd/MM/yyyy"
+                placeholderText="Select Date"
+                className="datepicker-input"
+              />
+            </div>
           </div>
 
-          {/* ================= TABS ================= */}
           <div className="tabs pill">
             {["Need Confirmation", "Closed"].map((tab) => (
               <button
@@ -197,7 +262,6 @@ const DispatchList: React.FC = () => {
           </div>
         </div>
 
-        {/* ================= LIST ================= */}
         <div className="dispatch-list-body">
           <input
             ref={fileInputRef}
@@ -206,8 +270,14 @@ const DispatchList: React.FC = () => {
             hidden
             onChange={handleFileUpload}
           />
+          
 
-          {filteredDispatches.length === 0 ? (
+          {loading ? (
+            <div className="empty-state-container">
+               <div className="loading-spinner"></div>
+    <p>Loading dispatches...</p>
+            </div>
+          ) : filteredDispatches.length === 0 ? (
             <div className="empty-state-container">
               <FiInbox size={50} style={{ color: "#94a3b8" }} />
               <h3>No dispatches found</h3>
@@ -216,14 +286,12 @@ const DispatchList: React.FC = () => {
           ) : (
             filteredDispatches.map((d) => (
               <div key={d.id} className="dispatch-card" onClick={() => setSelectedDispatch(d)}>
-                {/* CARD TOP */}
                 <div className="card-top">
                   <div>
                     <h3>{d.code}</h3>
                     <p>PO: {d.po}</p>
                     <p>Client: {d.client}</p>
                   </div>
-
                   {activeTab !== "Closed" && (
                     <span className={`badge-priority ${d.priority.toLowerCase()}`}>
                       {d.priority} {d.priority === "P1" && <FiAlertTriangle />}
@@ -231,32 +299,26 @@ const DispatchList: React.FC = () => {
                   )}
                 </div>
 
-                {/* CARD BOTTOM GRID */}
                 <div className="card-bottom-grid">
                   <div>
                     <label>
-                      <FiCalendar className="calendar-icon" style={{ color: "#2563eb" }} />
-                      Date & Time
+                      <FiCalendar className="calendar-icon" /> Date & Time
                     </label>
                     <span>
-                      {d.date}
+                      {formatDisplayDate(d.date)}
                       <br />
                       {d.time}
                     </span>
                   </div>
-
                   <div>
                     <label>
-                      <FiPackage className="quantity-icon" style={{ color: "#f97316" }} />
-                      Qty
+                      <FiPackage className="quantity-icon" /> Qty
                     </label>
                     <span>{d.quantity}</span>
                   </div>
-
                   <div>
                     <label>
-                      <FiMapPin className="location-icon" style={{ color: "#16a34a" }} />
-                      Location
+                      <FiMapPin className="location-icon" /> Location
                     </label>
                     <span>{d.location}</span>
                   </div>
@@ -267,31 +329,33 @@ const DispatchList: React.FC = () => {
         </div>
       </div>
 
-      {/* ================= DETAILS OVERLAY ================= */}
       {selectedDispatch && (
         <DispatchDetailsOverlay
           dispatch={selectedDispatch}
           onClose={() => setSelectedDispatch(null)}
           onEdit={() => {
-            // Prevent editing closed dispatches
-            if (selectedDispatch.status !== "Closed") {
-              setEditDispatch(selectedDispatch);
-            } else {
-              alert("Closed dispatches cannot be edited.");
-            }
+            if (selectedDispatch.status !== "Closed") setEditDispatch(selectedDispatch);
+            else alert("Closed dispatches cannot be edited.");
             setSelectedDispatch(null);
           }}
         />
       )}
 
-      {/* ================= EDIT MODAL ================= */}
       {editDispatch && (
         <EditDispatchModal
           dispatch={editDispatch}
           onClose={() => setEditDispatch(null)}
-          onSave={(updated) => {
-            setDispatches((prev) => prev.map((d) => (d.id === updated.id ? updated : d)));
-            setEditDispatch(null);
+          onSave={async (updated) => {
+            try {
+              const saved = await updateDispatch(updated.id, updated);
+              setDispatches((prev) =>
+                prev.map((d) => (d.id === saved.id ? saved : d))
+              );
+              setEditDispatch(null);
+            } catch (error) {
+              console.error("Failed to update dispatch", error);
+              alert("Failed to save changes. Please try again.");
+            }
           }}
         />
       )}

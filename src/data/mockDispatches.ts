@@ -1,6 +1,8 @@
 // mockDispatches.ts
 export type Priority = "P1" | "P2" | "P3";
 
+
+
 export interface Dispatch {
   id: number;
   code: string;
@@ -12,7 +14,34 @@ export interface Dispatch {
   time: string;
   quantity: string | number;
   location: string;
+
+  // ===============================
+  // Role-based fields (optional)
+  // ===============================
+  pmPoVerified?: string | null;
+  pmTimeRequired?: number | "";
+  pmComments?: string;
+
+  fgMaterial?: string | null;
+  fgTime?: number | "";
+  fgComments?: string;
+
+  qcClearance?: string | null;
+  qcTime?: number | "";
+  qcComments?: string;
+
+  dispatchVehicle?: string | null;
+  dispatchHamali?: string | null;
+  dispatchSummary?: string;
+  dispatchTime?: number | "";
+  dispatchComments?: string;
+
+  financeDispatch?: string | null;
+  financeChallan?: string | null;
+  financeTime?: number | "";
+  financeComments?: string;
 }
+
 
 export const mockDispatches: Dispatch[] = [
   {

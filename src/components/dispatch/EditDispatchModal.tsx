@@ -1,13 +1,27 @@
 import React, { useEffect, useRef, useState } from "react";
 import "../../styles/edit-dispatch-modal.css";
+import {
+  FiUserCheck,
+  FiPackage,
+  FiShield,
+  FiTruck,
+  FiDollarSign,
+ 
+} from "react-icons/fi";
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
+import { Dropdown } from "primereact/dropdown";
 
-import { FiChevronDown } from "react-icons/fi";
+import {
+  FiChevronDown,
+  FiChevronUp,
+  FiLock,
+  FiCheckCircle,
+} from "react-icons/fi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 
@@ -17,6 +31,47 @@ type StatusType = "Need Confirmation" | "Closed" | "NIA";
 type PriorityType = "P1" | "P2" | "P3";
 
 const statusOptions: StatusType[] = ["Need Confirmation", "Closed"];
+const timeOptions = [
+  { label: "1 Hour", value: 1 },
+  { label: "2 Hours", value: 2 },
+  { label: "3 Hours", value: 3 },
+  { label: "4 Hours", value: 4 },
+  { label: "5 Hours", value: 5 },
+   { label: "6 Hours", value: 6 },
+    { label: "7 Hours", value: 7 },
+     { label: "8 Hours", value: 8 },
+];
+
+// const timeOptions = [1, 2, 3, 4, 5, 6, 7, 8];
+
+/* ======================
+   SAFE PARSERS
+====================== */
+const parseDispatchDate = (v?: string): Date | null => {
+  if (!v || v.trim() === "" || v === "To be updated") return null;
+  const cleaned = v.replace(/[-.]/g, "/");
+  const parts = cleaned.split("/");
+  if (parts.length !== 3) return null;
+  const day = Number(parts[0]),
+    month = Number(parts[1]) - 1,
+    year = Number(parts[2]);
+  const parsed = new Date(year, month, day);
+  return isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const parseDispatchTime = (v?: string): Date => {
+  if (!v) return new Date();
+  const match = v.match(/^(\d{1,2}):(\d{2})(?:\s?(AM|PM))?$/i);
+  if (!match) return new Date();
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10),
+    period = match[3]?.toUpperCase();
+  if (period === "PM" && hours < 12) hours += 12;
+  if (period === "AM" && hours === 12) hours = 0;
+  const d = new Date();
+  d.setHours(hours, minutes, 0, 0);
+  return d;
+};
 
 interface Props {
   dispatch: Dispatch;
@@ -24,305 +79,761 @@ interface Props {
   onSave: (d: Dispatch) => void;
 }
 
-/* ======================
-   SAFE DATE PARSER
-====================== */
-const parseDispatchDate = (v?: string): Date | null => {
-  console.log("🟡 parseDispatchDate input:", v);
-
-  if (!v || v.trim() === "" || v === "To be updated") {
-    console.log("➡️ No date found → returning null");
-    return null;
-  }
-
-  // Replace any separator - or . with /
-  const cleaned = v.replace(/[-.]/g, "/");
-  const parts = cleaned.split("/");
-
-  if (parts.length !== 3) {
-    console.log("❌ Invalid date format:", v);
-    return null;
-  }
-
-  const day = Number(parts[0]);
-  const month = Number(parts[1]) - 1;
-  const year = Number(parts[2]);
-
-  const parsed = new Date(year, month, day);
-
-  if (isNaN(parsed.getTime())) {
-    console.log("❌ Parsed date is invalid:", parsed);
-    return null;
-  }
-
-  console.log("✅ Parsed date object:", parsed);
-  return parsed;
-};
-
-/* ======================
-   SAFE TIME PARSER
-====================== */
-const parseDispatchTime = (v?: string): Date => {
-  console.log("🟡 parseDispatchTime input:", v);
-
-  if (!v) {
-    console.log("➡️ No time → defaulting to current time");
-    return new Date();
-  }
-
-  const match = v.match(/^(\d{1,2}):(\d{2})(?:\s?(AM|PM))?$/i);
-  if (!match) {
-    console.log("❌ Invalid time format → defaulting to now:", v);
-    return new Date();
-  }
-
-  let hours = parseInt(match[1], 10);
-  const minutes = parseInt(match[2], 10);
-  const period = match[3]?.toUpperCase();
-
-  if (period === "PM" && hours < 12) hours += 12;
-  if (period === "AM" && hours === 12) hours = 0;
-
-  const d = new Date();
-  d.setHours(hours, minutes, 0, 0);
-
-  console.log("✅ Parsed time object:", d);
-  return d;
-};
 const EditDispatchModal: React.FC<Props> = ({ dispatch, onClose, onSave }) => {
+  const userRole = sessionStorage.getItem("role") || "superuser";
+  const isSuper = userRole === "superuser";
+
+  // MASTER STATES
   const [client, setClient] = useState(dispatch.client || "");
   const [po, setPo] = useState(dispatch.po || "");
   const [item, setItem] = useState(dispatch.code || "");
   const [quantity, setQuantity] = useState(
-    dispatch.quantity !== undefined && dispatch.quantity !== null
-      ? String(dispatch.quantity)
-      : ""
+    dispatch.quantity !== undefined ? String(dispatch.quantity) : "",
   );
   const [location, setLocation] = useState(dispatch.location || "");
+  const [date, setDate] = useState<Date | null>(
+    parseDispatchDate(dispatch.date),
+  );
+  const [time, setTime] = useState<Date>(parseDispatchTime(dispatch.time));
+  const [status, setStatus] = useState<StatusType>(
+    dispatch.status || "Need Confirmation",
+  );
+  const [priority, setPriority] = useState<PriorityType>(
+    dispatch.priority || "P1",
+  );
 
-  /* ---------- DATE & TIME ---------- */
-  const [date, setDate] = useState<Date | null>(null);
-  const [time, setTime] = useState<Date>(new Date());
+  // ROLE STATES
+  const [formData, setFormData] = useState<Dispatch>({ ...dispatch });
 
-  const [status, setStatus] = useState<StatusType>(dispatch.status || "Need Confirmation");
-  const [priority, setPriority] = useState<PriorityType>(dispatch.priority || "P1");
-
+  // UI STATES
   const [statusOpen, setStatusOpen] = useState(false);
   const [openUp, setOpenUp] = useState(false);
-
   const statusRef = useRef<HTMLDivElement>(null);
+  const [openSection, setOpenSection] = useState<string | null>("master");
 
-  // Close dropdown on outside click
   useEffect(() => {
     const close = (e: MouseEvent) => {
-      if (statusRef.current && !statusRef.current.contains(e.target as Node)) {
+      if (statusRef.current && !statusRef.current.contains(e.target as Node))
         setStatusOpen(false);
-      }
     };
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, []);
 
-  // Populate state if dispatch changes
-  useEffect(() => {
-    if (!dispatch) return;
-
-    setClient(dispatch.client || "");
-    setPo(dispatch.po || "");
-    setItem(dispatch.code || "");
-    setQuantity(
-      dispatch.quantity !== undefined && dispatch.quantity !== null
-        ? String(dispatch.quantity)
-        : ""
-    );
-    setLocation(dispatch.location || "");
-  const parsedDate = parseDispatchDate(dispatch.date);
-    console.log("📅 Final date state:", parsedDate);
-    setDate(parsedDate);
-
-    const parsedTime = parseDispatchTime(dispatch.time);
-    console.log("⏰ Final time state:", parsedTime);
-    setTime(parsedTime);
-    setStatus(dispatch.status || "Need Confirmation");
-    setPriority(dispatch.priority || "P1");
-  }, [dispatch]);
-
   const handleSave = () => {
-    // Fix quantity parsing
-    const qtyValue = quantity.trim();
-    const parsedQty = Number(qtyValue);
-
-    const finalQuantity =
-      qtyValue === ""
-        ? dispatch.quantity ?? 0
-        : isNaN(parsedQty)
-        ? qtyValue // allow string fallback
-        : parsedQty;
-       console.log("💾 Saving dispatch...");
-
-    const savedDate = date ? date.toLocaleDateString("en-GB") : "";
-    const savedTime = time.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-    console.log("📤 Saving date:", savedDate);
-    console.log("📤 Saving time:", savedTime);  
+    const savedDate = date
+      ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+      : "";
+    const savedTime = time
+      ? `${String(time.getHours()).padStart(2, "0")}:${String(time.getMinutes()).padStart(2, "0")}`
+      : "";
 
     onSave({
-      ...dispatch,
+      ...formData,
       client,
       po,
       code: item,
-      quantity: finalQuantity,
+      quantity: Number(quantity),
       location,
-      date: savedDate, // ✅ string ONLY
-      time: savedTime, status,
+      status,
       priority,
+      date: savedDate,
+      time: savedTime,
     });
   };
+
+  const RenderRadio = (field: keyof Dispatch, label: string) => (
+    <div className="edit-group">
+      <label>{label}</label>
+      <div className="radio-container">
+        <label className="radio-option">
+          <input
+            type="radio"
+            checked={formData[field] === "Yes"}
+            onChange={() => setFormData({ ...formData, [field]: "Yes" })}
+          />
+          <span>Yes</span>
+        </label>
+        <label className="radio-option">
+          <input
+            type="radio"
+            checked={formData[field] === "No"}
+            onChange={() => setFormData({ ...formData, [field]: "No" })}
+          />
+          <span>No</span>
+        </label>
+      </div>
+    </div>
+  );
 
   return (
     <div className="edit-overlay" onClick={onClose}>
       <div className="edit-sheet" onClick={(e) => e.stopPropagation()}>
-        {/* HEADER */}
-        <div className="edit-header">
-          <h2>Edit Dispatch</h2>
-          <button className="edit-close" onClick={onClose}>
-            <FontAwesomeIcon icon={faXmark} />
-          </button>
-        </div>
+       <div className="edit-header">
+  <div className="edit-header-left">
+    <h2 className="edit-title">Modify Dispatch Record</h2>
+    <span className="edit-subtitle">Review and update the dispatch information as required</span>
+  </div>
 
-        <hr />
+  <button className="edit-close" onClick={onClose}>
+    <FontAwesomeIcon icon={faXmark} />
+  </button>
+</div>
 
-        {/* BODY */}
+
         <div className="edit-body">
-          <div className="edit-grid">
-            <div className="edit-group">
-              <label>Client Name</label>
-              <InputText value={client} onChange={(e) => setClient(e.target.value)} />
+          {/* 1. MASTER DATA ACCORDION */}
+          <div className="edit-accordion master">
+            <div
+              className="accordion-trigger"
+              onClick={() =>
+                setOpenSection(openSection === "master" ? null : "master")
+              }
+            >
+              <span>
+                <FiLock /> Core Dispatch Details
+              </span>
+              {openSection === "master" ? <FiChevronUp /> : <FiChevronDown />}
             </div>
-
-            <div className="edit-group">
-              <label>PO Number</label>
-              <InputText value={po} onChange={(e) => setPo(e.target.value)} />
-            </div>
-
-            <div className="edit-group">
-              <label>Item / Description</label>
-              <InputText value={item} onChange={(e) => setItem(e.target.value)} />
-            </div>
-
-            <div className="edit-group">
-              <label>Date & Time</label>
-              <div className="edit-datetime">
-                <DatePicker
-                  selected={date}
-                   onChange={(d: Date | null) => {
-                    console.log("🟢 DatePicker change:", d);
-                    setDate(d);
-                  }}
-                  dateFormat="dd/MM/yyyy"
-                  className="edit-input"
-                  popperContainer={({ children }) => <div style={{ position: "relative" }}>{children}</div>}
-                  popperPlacement="bottom-start"
-                  dropdownMode="select"
-                />
-                <DatePicker
-                  selected={time}
-                onChange={(t: Date | null) => {
-                    console.log("🟢 TimePicker change:", t);
-                    if (t) setTime(t);
-                  }}
-                  showTimeSelect
-                  showTimeSelectOnly
-                  timeIntervals={15}
-                  dateFormat="h:mm aa"
-                  className="edit-input"
-                  popperContainer={({ children }) => <div style={{ position: "relative" }}>{children}</div>}
-                  popperPlacement="bottom-start"
-                  dropdownMode="select"
-                />
-              </div>
-            </div>
-
-            <div className="edit-group">
-              <label>Quantity</label>
-              <InputText value={quantity} onChange={(e) => setQuantity(e.target.value)} />
-            </div>
-
-            <div className="edit-group">
-              <label>Location / Vehicle</label>
-              <InputTextarea
-                value={location}
-                rows={1}
-                autoResize
-                onChange={(e) => setLocation(e.target.value)}
-              />
-            </div>
-
-            {/* STATUS */}
-            <div className="edit-group" ref={statusRef}>
-              <label>Status</label>
-              <div
-                className="edit-dropdown"
-                onClick={() => {
-                  if (statusRef.current) {
-                    const rect = statusRef.current.getBoundingClientRect();
-                    const spaceBelow = window.innerHeight - rect.bottom;
-                    setOpenUp(spaceBelow < 200);
-                  }
-                  setStatusOpen(!statusOpen);
-                }}
-              >
-                <span>{status}</span>
-                <FiChevronDown />
-              </div>
-              {statusOpen && (
-                <div className={`edit-dropdown-menu ${openUp ? "up" : "down"}`}>
-                  {statusOptions.map((s) => (
-                    <div
-                      key={s}
-                      className="edit-dropdown-item"
-                      onClick={() => {
-                        setStatus(s);
-                        setStatusOpen(false);
-                      }}
-                    >
-                      {s}
+            {openSection === "master" && (
+              <div className="accordion-content">
+                <div className="edit-grid">
+                  <div className="edit-group">
+                    <label>Client Name</label>
+                    <InputText
+                      value={client}
+                      onChange={(e) => setClient(e.target.value)}
+                    />
+                  </div>
+                  <div className="edit-group">
+                    <label>PO Number</label>
+                    <InputText
+                      value={po}
+                      onChange={(e) => setPo(e.target.value)}
+                    />
+                  </div>
+                  <div className="edit-group">
+                    <label>Item / Description</label>
+                    <InputText
+                      value={item}
+                      onChange={(e) => setItem(e.target.value)}
+                    />
+                  </div>
+                  <div className="edit-group">
+                    <label>Date & Time</label>
+                    <div className="edit-datetime">
+                      <DatePicker
+                        selected={date}
+                        onChange={(d: Date | null) => setDate(d)}
+                        dateFormat="dd/MM/yyyy"
+                        className="edit-input"
+                        portalId="root"
+                      />
+                      <DatePicker
+                        selected={time}
+                        onChange={(t: Date | null) => t && setTime(t)}
+                        showTimeSelect
+                        showTimeSelectOnly
+                        timeIntervals={15}
+                        dateFormat="h:mm aa"
+                        className="edit-input"
+                        portalId="root"
+                      />
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                  </div>
+                  <div className="edit-group">
+                    <label>Quantity</label>
+                    <InputText
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                    />
+                  </div>
+                  <div className="edit-group">
+                    <label>Location / Vehicle</label>
+                    <InputTextarea
+                      value={location}
+                      rows={1}
+                      autoResize
+                      onChange={(e) => setLocation(e.target.value)}
+                    />
+                  </div>
 
-            {/* PRIORITY */}
-            <div className="edit-group">
-              <label>Priority Override</label>
-              <div className="priority-slider">
-                <div className={`priority-indicator ${priority.toLowerCase()}`} />
-                {(["P1", "P2", "P3"] as PriorityType[]).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    className={`priority-btn ${priority === p ? "active" : ""}`}
-                    onClick={() => setPriority(p)}
-                  >
-                    {p}
-                  </button>
-                ))}
+                  <div className="edit-group" ref={statusRef}>
+                    <label>Status</label>
+                    <div
+                      className="edit-dropdown"
+                      onClick={() => setStatusOpen(!statusOpen)}
+                    >
+                      <span>{status}</span>
+                      <FiChevronDown />
+                    </div>
+                    {statusOpen && (
+                      <div className="edit-dropdown-menu">
+                        {statusOptions.map((s) => (
+                          <div
+                            key={s}
+                            className="edit-dropdown-item"
+                            onClick={() => {
+                              setStatus(s);
+                              setStatusOpen(false);
+                            }}
+                          >
+                            {s}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                <div className="edit-group">
+  <label>Priority Override</label>
+  <div className="priority-slider">
+    {(["P1", "P2", "P3"] as PriorityType[]).map((p) => (
+      <button
+        key={p}
+        type="button"
+        className={`priority-btn ${
+          priority === p ? `active ${p.toLowerCase()}` : ""
+        }`}
+        onClick={() => setPriority(p)}
+      >
+        {p}
+      </button>
+    ))}
+  </div>
+</div>
+
+                </div>
               </div>
-            </div>
+            )}
           </div>
+
+          {/* 2. PLANT MANAGER SECTION */}
+          {/* PLANT MANAGER SECTION */}
+{(userRole === "plantManager" || isSuper) && (
+  <div className="edit-accordion plant">
+
+    {/* Accordion Header */}
+    <div
+      className="accordion-trigger"
+      onClick={() =>
+        setOpenSection(prev => (prev === "pm" ? null : "pm"))
+      }
+    >
+      <span>
+        <FiUserCheck className="section-icon" />
+        Plant Manager
+      </span>
+      {openSection === "pm" ? <FiChevronUp /> : <FiChevronDown />}
+    </div>
+
+    {/* Accordion Content */}
+    {openSection === "pm" && (
+      <div className="accordion-content pm-content">
+
+        {/* PO Verification */}
+        <label className="edit-label-sm required">
+          PO Verification
+        </label>
+
+        <div className="radio-group">
+          <label className="radio-option">
+            <input
+              type="radio"
+              name="pmPoVerified"
+              value="Yes"
+              checked={formData.pmPoVerified === "Yes"}
+              onChange={(e) =>
+                setFormData(prev => ({
+                  ...prev,
+                  pmPoVerified: e.target.value,
+                }))
+              }
+            />
+            <span>Yes</span>
+          </label>
+
+          <label className="radio-option">
+            <input
+              type="radio"
+              name="pmPoVerified"
+              value="No"
+              checked={formData.pmPoVerified === "No"}
+              onChange={(e) =>
+                setFormData(prev => ({
+                  ...prev,
+                  pmPoVerified: e.target.value,
+                }))
+              }
+            />
+            <span>No</span>
+          </label>
         </div>
 
-        {/* FOOTER */}
+        {/* Time Required */}
+        <label className="edit-label-sm required">
+          Time Required (Hours)
+        </label>
+
+        <div className="dropdown-wrapper">
+       <Dropdown
+  value={formData.pmTimeRequired}
+  options={timeOptions}
+  onChange={(e) =>
+    setFormData(prev => ({
+      ...prev,
+      pmTimeRequired: e.value,
+    }))
+  }
+  placeholder="Select Time"
+  className="dispatch-dropdown modern-dropdown"
+  showClear
+/>
+
+
+          {/* <Dropdown
+            value={formData.pmTimeRequired}
+            options={timeOptions}
+          appendTo={() => document.querySelector('.edit-sheet') as HTMLElement}
+
+
+            onChange={(e) =>
+              setFormData(prev => ({
+                ...prev,
+                pmTimeRequired: e.value,
+              }))
+            }
+            placeholder="Select Time"
+            className="dispatch-dropdown modern-dropdown"
+            showClear */}
+        
+        </div>
+
+        {/* Comments */}
+        <label className="edit-label-sm">
+          Comments
+        </label>
+
+        <InputTextarea
+          value={formData.pmComments || ""}
+          onChange={(e) =>
+            setFormData(prev => ({
+              ...prev,
+              pmComments: e.target.value,
+            }))
+          }
+          placeholder="Enter comments"
+          rows={3}
+          className="edit-input"
+        />
+      </div>
+    )}
+  </div>
+)}
+
+          
+       
+
+{/* 3. FG SECTION */}
+{(userRole === "fg" || isSuper) && (
+  <div className="edit-accordion fg">
+
+    {/* Accordion Header */}
+    <div
+      className="accordion-trigger"
+      onClick={() => setOpenSection(prev => (prev === "fg" ? null : "fg"))}
+    >
+      <span>
+        <FiPackage className="section-icon" />
+        FG Section
+      </span>
+      {openSection === "fg" ? <FiChevronUp /> : <FiChevronDown />}
+    </div>
+
+    {/* Accordion Content */}
+    {openSection === "fg" && (
+      <div className="accordion-content fg-content">
+
+        {/* Material Availability */}
+        <label className="edit-label-sm required">Material Availability</label>
+        <div className="radio-group">
+          <label className="radio-option">
+            <input
+              type="radio"
+              name="fgMaterial"
+              value="Yes"
+              checked={formData.fgMaterial === "Yes"}
+              onChange={(e) =>
+                setFormData(prev => ({ ...prev, fgMaterial: e.target.value }))
+              }
+            />
+            <span>Yes</span>
+          </label>
+
+          <label className="radio-option">
+            <input
+              type="radio"
+              name="fgMaterial"
+              value="No"
+              checked={formData.fgMaterial === "No"}
+              onChange={(e) =>
+                setFormData(prev => ({ ...prev, fgMaterial: e.target.value }))
+              }
+            />
+            <span>No</span>
+          </label>
+        </div>
+
+        {/* Time Required */}
+        <label className="edit-label-sm required">Time Required (Hours)</label>
+        <div className="dropdown-wrapper">
+          <Dropdown
+            value={formData.fgTime}
+            options={timeOptions}
+            onChange={(e) =>
+              setFormData(prev => ({ ...prev, fgTime: e.value }))
+            }
+            placeholder="Select Time"
+            className="dispatch-dropdown modern-dropdown"
+            showClear
+          />
+        </div>
+
+        {/* Comments */}
+        <label className="edit-label-sm">Comments</label>
+        <InputTextarea
+          value={formData.fgComments || ""}
+          onChange={(e) =>
+            setFormData(prev => ({ ...prev, fgComments: e.target.value }))
+          }
+          placeholder="Enter comments"
+          rows={3}
+          className="edit-input"
+        />
+
+      </div>
+    )}
+  </div>
+)}
+
+{/* 4. QC SECTION */}
+{(userRole === "qc" || isSuper) && (
+  <div className="edit-accordion qc">
+
+    {/* Accordion Header */}
+    <div
+      className="accordion-trigger"
+      onClick={() => setOpenSection(prev => (prev === "qc" ? null : "qc"))}
+    >
+      <span>
+        <FiShield className="section-icon" />
+        QC Section
+      </span>
+      {openSection === "qc" ? <FiChevronUp /> : <FiChevronDown />}
+    </div>
+
+    {/* Accordion Content */}
+    {openSection === "qc" && (
+      <div className="accordion-content qc-content">
+
+        {/* Quality Clearance */}
+        <label className="edit-label-sm required">Quality Clearance</label>
+        <div className="radio-group">
+          <label className="radio-option">
+            <input
+              type="radio"
+              name="qcClearance"
+              value="Yes"
+              checked={formData.qcClearance === "Yes"}
+              onChange={(e) =>
+                setFormData(prev => ({ ...prev, qcClearance: e.target.value }))
+              }
+            />
+            <span>Yes</span>
+          </label>
+
+          <label className="radio-option">
+            <input
+              type="radio"
+              name="qcClearance"
+              value="No"
+              checked={formData.qcClearance === "No"}
+              onChange={(e) =>
+                setFormData(prev => ({ ...prev, qcClearance: e.target.value }))
+              }
+            />
+            <span>No</span>
+          </label>
+        </div>
+
+        {/* Time Required */}
+        <label className="edit-label-sm required">Time Required (Hours)</label>
+        <div className="dropdown-wrapper">
+          <Dropdown
+            value={formData.qcTime}
+            options={timeOptions}
+            onChange={(e) =>
+              setFormData(prev => ({ ...prev, qcTime: e.value }))
+            }
+            placeholder="Select Time"
+            className="dispatch-dropdown modern-dropdown"
+            showClear
+          />
+        </div>
+
+        {/* Comments */}
+        <label className="edit-label-sm">Comments</label>
+        <InputTextarea
+          value={formData.qcComments || ""}
+          onChange={(e) =>
+            setFormData(prev => ({ ...prev, qcComments: e.target.value }))
+          }
+          placeholder="Enter comments"
+          rows={3}
+          className="edit-input"
+        />
+
+      </div>
+    )}
+  </div>
+)}
+
+{/* 5. DISPATCH SECTION */}
+{(userRole === "dispatch" || isSuper) && (
+  <div className="edit-accordion dispatch">
+
+    {/* Accordion Header */}
+    <div
+      className="accordion-trigger"
+      onClick={() => setOpenSection(prev => (prev === "dispatch" ? null : "dispatch"))}
+    >
+      <span>
+        <FiTruck className="section-icon" />
+        Dispatch Section
+      </span>
+      {openSection === "dispatch" ? <FiChevronUp /> : <FiChevronDown />}
+    </div>
+
+    {/* Accordion Content */}
+    {openSection === "dispatch" && (
+      <div className="accordion-content dispatch-content">
+
+        {/* Vehicle Availability */}
+        <label className="edit-label-sm required">Vehicle Availability</label>
+        <div className="radio-group">
+          <label className="radio-option">
+            <input
+              type="radio"
+              name="dispatchVehicle"
+              value="Yes"
+              checked={formData.dispatchVehicle === "Yes"}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, dispatchVehicle: e.target.value }))
+              }
+            />
+            <span>Yes</span>
+          </label>
+          <label className="radio-option">
+            <input
+              type="radio"
+              name="dispatchVehicle"
+              value="No"
+              checked={formData.dispatchVehicle === "No"}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, dispatchVehicle: e.target.value }))
+              }
+            />
+            <span>No</span>
+          </label>
+        </div>
+
+        {/* Hamali Availability */}
+        <label className="edit-label-sm required">Hamali Availability</label>
+        <div className="radio-group">
+          <label className="radio-option">
+            <input
+              type="radio"
+              name="dispatchHamali"
+              value="Yes"
+              checked={formData.dispatchHamali === "Yes"}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, dispatchHamali: e.target.value }))
+              }
+            />
+            <span>Yes</span>
+          </label>
+          <label className="radio-option">
+            <input
+              type="radio"
+              name="dispatchHamali"
+              value="No"
+              checked={formData.dispatchHamali === "No"}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, dispatchHamali: e.target.value }))
+              }
+            />
+            <span>No</span>
+          </label>
+        </div>
+
+        {/* Shipment Summary */}
+        <label className="edit-label-sm">Shipment Summary</label>
+        <InputTextarea
+          value={formData.dispatchSummary || ""}
+          onChange={e =>
+            setFormData(prev => ({ ...prev, dispatchSummary: e.target.value }))
+          }
+          placeholder="Enter shipment summary"
+          rows={3}
+          className="edit-input"
+        />
+
+        {/* Time Required */}
+        <label className="edit-label-sm required">Time Required (Hours)</label>
+        <div className="dropdown-wrapper">
+          <Dropdown
+            value={formData.dispatchTime}
+            options={timeOptions}
+            onChange={e => setFormData(prev => ({ ...prev, dispatchTime: e.value }))}
+            placeholder="Select Time"
+            className="dispatch-dropdown modern-dropdown"
+            showClear
+          />
+        </div>
+
+        {/* Comments */}
+        <label className="edit-label-sm">Comments</label>
+        <InputTextarea
+          value={formData.dispatchComments || ""}
+          onChange={e =>
+            setFormData(prev => ({ ...prev, dispatchComments: e.target.value }))
+          }
+          placeholder="Enter comments"
+          rows={3}
+          className="edit-input"
+        />
+
+      </div>
+    )}
+  </div>
+)}
+
+{/* 6. FINANCE SECTION */}
+{(userRole === "finance" || isSuper) && (
+  <div className="edit-accordion finance">
+
+    {/* Accordion Header */}
+    <div
+      className="accordion-trigger"
+      onClick={() => setOpenSection(prev => (prev === "finance" ? null : "finance"))}
+    >
+      <span>
+        <FiDollarSign className="section-icon" />
+        Finance Section
+      </span>
+      {openSection === "finance" ? <FiChevronUp /> : <FiChevronDown />}
+    </div>
+
+    {/* Accordion Content */}
+    {openSection === "finance" && (
+      <div className="accordion-content finance-content">
+
+        {/* Dispatch Summary Ready */}
+        <label className="edit-label-sm required">Dispatch Summary Ready</label>
+        <div className="radio-group">
+          <label className="radio-option">
+            <input
+              type="radio"
+              name="financeDispatch"
+              value="Yes"
+              checked={formData.financeDispatch === "Yes"}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, financeDispatch: e.target.value }))
+              }
+            />
+            <span>Yes</span>
+          </label>
+          <label className="radio-option">
+            <input
+              type="radio"
+              name="financeDispatch"
+              value="No"
+              checked={formData.financeDispatch === "No"}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, financeDispatch: e.target.value }))
+              }
+            />
+            <span>No</span>
+          </label>
+        </div>
+
+        {/* Challan Prepared */}
+        <label className="edit-label-sm required">Challan Prepared</label>
+        <div className="radio-group">
+          <label className="radio-option">
+            <input
+              type="radio"
+              name="financeChallan"
+              value="Yes"
+              checked={formData.financeChallan === "Yes"}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, financeChallan: e.target.value }))
+              }
+            />
+            <span>Yes</span>
+          </label>
+          <label className="radio-option">
+            <input
+              type="radio"
+              name="financeChallan"
+              value="No"
+              checked={formData.financeChallan === "No"}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, financeChallan: e.target.value }))
+              }
+            />
+            <span>No</span>
+          </label>
+        </div>
+
+        {/* Time Required */}
+        <label className="edit-label-sm required">Time Required (Hours)</label>
+        <div className="dropdown-wrapper">
+          <Dropdown
+            value={formData.financeTime}
+            options={timeOptions}
+            onChange={e => setFormData(prev => ({ ...prev, financeTime: e.value }))}
+            placeholder="Select Time"
+            className="dispatch-dropdown modern-dropdown"
+            showClear
+          />
+        </div>
+
+        {/* Comments */}
+        <label className="edit-label-sm">Comments</label>
+        <InputTextarea
+          value={formData.financeComments || ""}
+          onChange={e =>
+            setFormData(prev => ({ ...prev, financeComments: e.target.value }))
+          }
+          placeholder="Enter comments"
+          rows={3}
+          className="edit-input"
+        />
+
+      </div>
+    )}
+  </div>
+)}
+
+        </div>
+
         <div className="edit-footer">
           <button className="btn-primary" onClick={handleSave}>
-            Save Dispatch
+            Save Changes
           </button>
           <button className="btn-secondary" onClick={onClose}>
-            Cancel
+             Discard Changes
           </button>
         </div>
       </div>
