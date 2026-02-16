@@ -1,14 +1,5 @@
 /* ===================== GLOBAL RESET ===================== */
-/* * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
 
-body {
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-  background: #f4f6f8;
-} */
 
 /* ===================== LOGIN WRAPPER ===================== */
 .login-wrapper {
@@ -18,12 +9,6 @@ body {
   align-items: center;
   padding: 20px;
 
-  /* Optional background image */
-  /* Uncomment if you want bg */
-  /* background-image: url('/assets/bg.jpeg'); */
-  /* background-size: cover; */
-  /* background-position: center; */
-  /* background-repeat: no-repeat; */
 }
 
 /* ===================== LOGIN CARD ===================== */

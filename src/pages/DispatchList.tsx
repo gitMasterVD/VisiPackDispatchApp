@@ -56,7 +56,33 @@ const formatDisplayDate = (value: string) => {
   }
   return value;
 };
+const normalizeToYMD = (value: any): string => {
+  if (!value) return "";
 
+  if (value instanceof Date) {
+    const y = value.getFullYear();
+    const m = String(value.getMonth() + 1).padStart(2, "0");
+    const d = String(value.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  const str = String(value).trim();
+
+  const match1 = str.match(/^(\d{2})[.\-/](\d{2})[.\-/](\d{4})$/);
+  if (match1) {
+    return `${match1[3]}-${match1[2]}-${match1[1]}`;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return str;
+  }
+
+  if (str.includes("T")) {
+    return str.split("T")[0];
+  }
+
+  return "";
+};
 /* ================= COMPONENT ================= */
 const DispatchList: React.FC = () => {
   const navigate = useNavigate();
@@ -68,7 +94,8 @@ const DispatchList: React.FC = () => {
   const [search, setSearch] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<"All" | Priority>("All");
   const [activeTab, setActiveTab] = useState<"Need Confirmation" | "Closed">("Need Confirmation");
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
 
   const [selectedDispatch, setSelectedDispatch] = useState<Dispatch | null>(null);
   const [editDispatch, setEditDispatch] = useState<Dispatch | null>(null);
@@ -152,11 +179,18 @@ const DispatchList: React.FC = () => {
       )
       .filter((d) => tabStatusMap[activeTab].includes(d.status))
       .filter((d) => selectedPriority === "All" || d.priority === selectedPriority)
-      .filter((d) => {
-        if (!selectedDate) return true;
-        if (!d.date || d.date === TO_BE_UPDATED) return false;
-        return normalizeDate(d.date) === selectedDate;
-      })
+ .filter((d) => {
+  if (!selectedDate) return true;
+  if (!d.date || d.date === TO_BE_UPDATED) return false;
+
+  const selectedNormalized = normalizeToYMD(selectedDate);
+  const dispatchNormalized = normalizeToYMD(d.date);
+
+  return selectedNormalized === dispatchNormalized;
+})
+
+
+
       .sort((a, b) =>
         selectedPriority === "All" ? priorityOrder[a.priority] - priorityOrder[b.priority] : 0
       );
@@ -237,15 +271,14 @@ const DispatchList: React.FC = () => {
 
             <div className="date-filter">
               <FiCalendar />
-              <DatePicker
-                selected={selectedDate ? new Date(selectedDate) : null}
-                onChange={(date: Date | null) =>
-                  setSelectedDate(date ? date.toISOString().split("T")[0] : "")
-                }
-                dateFormat="dd/MM/yyyy"
-                placeholderText="Select Date"
-                className="datepicker-input"
-              />
+             <DatePicker
+  selected={selectedDate}
+  onChange={(date: Date | null) => setSelectedDate(date)}
+  dateFormat="dd/MM/yyyy"
+  placeholderText="Select Date"
+  className="datepicker-input"
+/>
+
             </div>
           </div>
 

@@ -242,13 +242,7 @@
   position: relative;
 }
 
-/* Force calendar to align with input width */
-/* .form-row .react-datepicker-popper {
-  left: 0 !important;
-  right: auto !important;
-  transform: translate3d(0, 0, 0) !important;
-} */
- 
+
 
 /* Ensure calendar never exceeds input container */
 .form-row .react-datepicker {

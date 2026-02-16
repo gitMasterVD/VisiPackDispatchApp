@@ -40,16 +40,7 @@ type StatusType = "Need Confirmation" | "Closed" | "NIA";
 type PriorityType = "P1" | "P2" | "P3";
 
 const statusOptions: StatusType[] = ["Need Confirmation", "Closed"];
-// const timeOptions = [
-//   { label: "1 Hour", value: 1 },
-//   { label: "2 Hours", value: 2 },
-//   { label: "3 Hours", value: 3 },
-//   { label: "4 Hours", value: 4 },
-//   { label: "5 Hours", value: 5 },
-//    { label: "6 Hours", value: 6 },
-//     { label: "7 Hours", value: 7 },
-//      { label: "8 Hours", value: 8 },
-// ];
+
 const timeOptions: TimeOption[] = [
   { label: "1 Hour", value: 1 },
   { label: "2 Hours", value: 2 },
@@ -352,7 +343,7 @@ const EditDispatchModal: React.FC<Props> = ({ dispatch, onClose, onSave }) => {
           </div>
 
           {/* 2. PLANT MANAGER SECTION */}
-          {/* PLANT MANAGER SECTION */}
+       
 {(userRole === "plantManager" || isSuper) && (
   <div className="edit-accordion plant">
 
@@ -533,18 +524,8 @@ const EditDispatchModal: React.FC<Props> = ({ dispatch, onClose, onSave }) => {
 
         {/* Time Required */}
         <label className="edit-label-sm required">Time Required (Hours)</label>
-        {/* <div className="dropdown-wrapper">
-          <Dropdown
-            value={formData.fgTime}
-            options={timeOptions}
-            onChange={(e) =>
-              setFormData(prev => ({ ...prev, fgTime: e.value }))
-            }
-            placeholder="Select Time"
-            className="dispatch-dropdown modern-dropdown"
-            showClear
-          />
-        </div> */}
+     
+      
         <TimeSelect
   value={formData.fgTime}
   onChange={(value) =>
@@ -629,18 +610,6 @@ const EditDispatchModal: React.FC<Props> = ({ dispatch, onClose, onSave }) => {
   }
 />
 
-        {/* <div className="dropdown-wrapper">
-          <Dropdown
-            value={formData.qcTime}
-            options={timeOptions}
-            onChange={(e) =>
-              setFormData(prev => ({ ...prev, qcTime: e.value }))
-            }
-            placeholder="Select Time"
-            className="dispatch-dropdown modern-dropdown"
-            showClear
-          />
-        </div> */}
 
         {/* Comments */}
         <label className="edit-label-sm">Comments</label>
@@ -758,16 +727,7 @@ const EditDispatchModal: React.FC<Props> = ({ dispatch, onClose, onSave }) => {
   }
 />
 
-        {/* <div className="dropdown-wrapper">
-          <Dropdown
-            value={formData.dispatchTime}
-            options={timeOptions}
-            onChange={e => setFormData(prev => ({ ...prev, dispatchTime: e.value }))}
-            placeholder="Select Time"
-            className="dispatch-dropdown modern-dropdown"
-            showClear
-          />
-        </div> */}
+     
 
         {/* Comments */}
         <label className="edit-label-sm">Comments</label>
@@ -866,16 +826,7 @@ const EditDispatchModal: React.FC<Props> = ({ dispatch, onClose, onSave }) => {
 
         {/* Time Required */}
         <label className="edit-label-sm required">Time Required (Hours)</label>
-        {/* <div className="dropdown-wrapper">
-          <Dropdown
-            value={formData.financeTime}
-            options={timeOptions}
-            onChange={e => setFormData(prev => ({ ...prev, financeTime: e.value }))}
-            placeholder="Select Time"
-            className="dispatch-dropdown modern-dropdown"
-            showClear
-          />
-        </div> */}
+       
         <TimeSelect
   value={formData.financeTime}
   onChange={(value) =>
