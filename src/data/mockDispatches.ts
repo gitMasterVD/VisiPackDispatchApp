@@ -19,26 +19,27 @@ export interface Dispatch {
   // Role-based fields (optional)
   // ===============================
   pmPoVerified?: string | null;
-  pmTimeRequired?: number | "";
+pmTimeRequired?: number | null;
+
   pmComments?: string;
 
   fgMaterial?: string | null;
-  fgTime?: number | "";
+  fgTime?: number | null;
   fgComments?: string;
 
   qcClearance?: string | null;
-  qcTime?: number | "";
+  qcTime?: number | null;
   qcComments?: string;
 
   dispatchVehicle?: string | null;
   dispatchHamali?: string | null;
   dispatchSummary?: string;
-  dispatchTime?: number | "";
+  dispatchTime?: number | null;
   dispatchComments?: string;
 
   financeDispatch?: string | null;
   financeChallan?: string | null;
-  financeTime?: number | "";
+  financeTime?: number | null;
   financeComments?: string;
 }
 

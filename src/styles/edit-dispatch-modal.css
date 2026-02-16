@@ -262,10 +262,6 @@ overflow: visible;
   border-color: var(--section-accent, #2563eb) !important;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
 }
-.radio-option input[type="radio"]:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
-}
 
 /* =====================================================
    DATE PICKER
@@ -293,33 +289,7 @@ overflow: visible;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* ==========================================
-   RADIO BUTTONS
-========================================== */
 
-.radio-group {
-  display: flex;
-  gap: 24px;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.radio-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  color: #334155;
-}
-
-.radio-option input[type="radio"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: var(--section-accent, #2563eb);
-}
 
 /* =====================================================
    DROPDOWN
@@ -623,4 +593,185 @@ overflow: visible;
 .p-dropdown-item.p-highlight {
   background: var(--section-accent, #2563eb) !important;
   color: #ffffff !important;
+}
+/* =====================================================
+   CUSTOM RADIO (NO BLACK BORDER EVER)
+===================================================== */
+
+.radio-group {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #334155;
+  user-select: none;
+}
+
+.radio-option input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  background: #ffffff;
+
+  display: grid;
+  place-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.radio-option input[type="radio"]::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transform: scale(0);
+  transition: transform 0.2s ease;
+  background: var(--section-accent, #2563eb);
+}
+
+.radio-option input[type="radio"]:checked {
+  border-color: var(--section-accent, #2563eb);
+}
+
+.radio-option input[type="radio"]:checked::before {
+  transform: scale(1);
+}
+
+.radio-option input[type="radio"]:hover {
+  border-color: var(--section-accent, #2563eb);
+}
+
+.radio-option input[type="radio"]:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.time-icon {
+  position: absolute;
+  right: 0.5rem;
+  font-size: 1.2rem; /* adjust icon size */
+  pointer-events: none; /* so clicking input works */
+}
+/* Align the showClear icon in PrimeReact dropdown */
+.modern-dropdown .p-dropdown-clear-icon {
+  position: absolute;
+  right: 50px;          /* space from the right edge */
+  top: 50%;            /* vertically center */
+  transform: translateY(-50%);
+  font-size: 1rem;     /* adjust icon size */
+  color: #6b7280;      /* same as your inputs */
+  cursor: pointer;
+  z-index: 2;
+}
+
+.modern-dropdown .p-dropdown-label {
+  padding-right: 2rem !important; /* leave space for clear icon */
+}
+
+/* Optional: hover effect for clear icon */
+.modern-dropdown .p-dropdown-clear-icon:hover {
+  color: #ef4444;       /* red on hover to indicate clear */
+}
+/* .dispatchSelect__control {
+  min-height: 38px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+}
+
+.dispatchSelect__control:hover {
+  border-color: #5a87ea;
+}
+
+.dispatchSelect__menu {
+  z-index: 9999;
+}
+.dispatchSelect__menu-portal {
+  z-index: 9999;
+}
+
+
+.dispatchSelect__placeholder {
+  color: #9ca3af;
+}
+.dispatchSelect__control--is-focused {
+  border-color: #5a87ea !important;
+  box-shadow: 0 0 0 1px #5a87ea !important;
+}
+.dispatchSelect__control {
+  cursor: pointer;
+} */
+
+
+/* ============================================
+   SECTION BASED TIME SELECT (react-select)
+============================================ */
+
+/* Default control */
+.edit-accordion .dispatchSelect__control {
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  transition: all 0.2s ease;
+}
+
+/* Hover = section color */
+.edit-accordion .dispatchSelect__control:hover {
+  border-color: var(--section-accent);
+}
+
+/* Focus = section color */
+.edit-accordion .dispatchSelect__control--is-focused {
+  border-color: var(--section-accent) !important;
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--section-accent) 20%, transparent) !important;
+}
+
+/* Selected value text */
+.edit-accordion .dispatchSelect__single-value {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+/* Dropdown menu border */
+.edit-accordion .dispatchSelect__menu {
+  border: 1px solid var(--section-accent);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* Hover option */
+.edit-accordion .dispatchSelect__option:hover {
+  background: color-mix(in srgb, var(--section-accent) 12%, white);
+}
+
+/* Selected option */
+.edit-accordion .dispatchSelect__option--is-selected {
+  background: var(--section-accent);
+  color: #ffffff;
+}
+/* ============================================
+   SECTION ACCENT FOCUS FOR ALL INPUT TYPES
+============================================ */
+
+.edit-accordion .edit-input:focus,
+.edit-accordion .p-inputtext:focus,
+.edit-accordion .p-inputtextarea:focus {
+  border-color: var(--section-accent) !important;
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--section-accent) 20%, transparent) !important;
+  outline: none !important;
 }
