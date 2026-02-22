@@ -1,5 +1,7 @@
-import { useState} from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
+import { useGoogleLogin } from "@react-oauth/google";
+
 
 
 import { useNavigate } from "react-router-dom";
@@ -27,12 +29,12 @@ const Login: React.FC = () => {
   const mockLogin = async (email: string, password: string): Promise<{ token: string; role: UserRole }> => {
     // You can map emails to different roles for testing
     const roleMap: Record<string, UserRole> = {
-      "superuser@example.com": "superuser",
-      "plant@example.com": "plantManager",
-      "fg@example.com": "fg",
-      "qc@example.com": "qc",
-      "dispatch@example.com": "dispatch",
-      "finance@example.com": "finance",
+      "gitmaster@vddigitalalliance.com": "superuser",
+      "karthik@vddigitalalliance.com": "plantManager",
+      "besha@vddigitalalliance.com": "fg",
+      "divya@vddigitalalliance.com": "qc",
+      "deepika@vddigitalalliance.com": "dispatch",
+      "laksmipathi.d@gmail.com": "finance",
     };
 
     // Simple validation
@@ -79,6 +81,56 @@ const Login: React.FC = () => {
       setErrors({ email: "", password: "Login failed. Check credentials." });
     }
   };
+
+  const login = useGoogleLogin({
+    scope: "https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email",
+    onSuccess: async (tokenResponse) => {
+      try {
+        const accessToken = tokenResponse.access_token;
+  
+        // Save token
+        localStorage.setItem("google_token", accessToken);
+  
+        // 🔥 Get user email from Google
+        const userRes = await fetch(
+          "https://www.googleapis.com/oauth2/v2/userinfo",
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+  
+        const userData = await userRes.json();
+        const email = userData.email;
+  
+        console.log("Logged in email:", email);
+  
+        // 🔥 Role mapping
+        const roleMap: Record<string, UserRole> = {
+          "gitmaster@vddigitalalliance.com": "superuser",
+          "karthik@vddigitalalliance.com": "plantManager",
+          "besha@vddigitalalliance.com": "fg",
+          "divya@vddigitalalliance.com": "qc",
+          "deepika@vddigitalalliance.com": "dispatch",
+          "laksmipathi.d@gmail.com": "finance",
+        };
+  
+        const role = roleMap[email] || "guest";
+  
+        // Save role in session
+        sessionStorage.setItem("role", role);
+        sessionStorage.setItem("user_email", email);
+  
+        navigate("/dispatches");
+      } catch (error) {
+        console.error("Login process failed", error);
+      }
+    },
+    onError: () => {
+      console.log("Login Failed");
+    },
+  });
 
   return (
     <div className="login-wrapper">
@@ -141,7 +193,7 @@ const Login: React.FC = () => {
 
         <div className="divider">or</div>
 
-        <button className="google-btn">🛡️ Continue with Google</button>
+        <button className="google-btn" onClick={() => login()}>🛡️ Continue with Google</button>
       </div>
     </div>
   );

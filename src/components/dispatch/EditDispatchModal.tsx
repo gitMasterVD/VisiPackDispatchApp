@@ -629,13 +629,15 @@ const EditDispatchModal: React.FC<Props> = ({ dispatch, onClose, onSave }) => {
 )}
 
 {/* 5. DISPATCH SECTION */}
+{/* 5. DISPATCH SECTION */}
 {(userRole === "dispatch" || isSuper) && (
   <div className="edit-accordion dispatch">
 
-    {/* Accordion Header */}
     <div
       className="accordion-trigger"
-      onClick={() => setOpenSection(prev => (prev === "dispatch" ? null : "dispatch"))}
+      onClick={() =>
+        setOpenSection(prev => (prev === "dispatch" ? null : "dispatch"))
+      }
     >
       <span>
         <FiTruck className="section-icon" />
@@ -644,9 +646,42 @@ const EditDispatchModal: React.FC<Props> = ({ dispatch, onClose, onSave }) => {
       {openSection === "dispatch" ? <FiChevronUp /> : <FiChevronDown />}
     </div>
 
-    {/* Accordion Content */}
     {openSection === "dispatch" && (
       <div className="accordion-content dispatch-content">
+
+        {/* Item Availability */}
+        <label className="edit-label-sm required">Item Availability</label>
+        <div className="radio-group">
+          <label className="radio-option">
+            <input
+              type="radio"
+              value="Yes"
+              checked={formData.itemAvailability === "Yes"}
+              onChange={e =>
+                setFormData(prev => ({
+                  ...prev,
+                  itemAvailability: e.target.value
+                }))
+              }
+            />
+            <span>Yes</span>
+          </label>
+
+          <label className="radio-option">
+            <input
+              type="radio"
+              value="No"
+              checked={formData.itemAvailability === "No"}
+              onChange={e =>
+                setFormData(prev => ({
+                  ...prev,
+                  itemAvailability: e.target.value
+                }))
+              }
+            />
+            <span>No</span>
+          </label>
+        </div>
 
         {/* Vehicle Availability */}
         <label className="edit-label-sm required">Vehicle Availability</label>
@@ -654,93 +689,118 @@ const EditDispatchModal: React.FC<Props> = ({ dispatch, onClose, onSave }) => {
           <label className="radio-option">
             <input
               type="radio"
-              name="dispatchVehicle"
               value="Yes"
               checked={formData.dispatchVehicle === "Yes"}
               onChange={e =>
-                setFormData(prev => ({ ...prev, dispatchVehicle: e.target.value }))
+                setFormData(prev => ({
+                  ...prev,
+                  dispatchVehicle: e.target.value
+                }))
               }
             />
             <span>Yes</span>
           </label>
+
           <label className="radio-option">
             <input
               type="radio"
-              name="dispatchVehicle"
               value="No"
               checked={formData.dispatchVehicle === "No"}
               onChange={e =>
-                setFormData(prev => ({ ...prev, dispatchVehicle: e.target.value }))
+                setFormData(prev => ({
+                  ...prev,
+                  dispatchVehicle: e.target.value
+                }))
               }
             />
             <span>No</span>
           </label>
         </div>
 
-        {/* Hamali Availability */}
-        <label className="edit-label-sm required">Hamali Availability</label>
+        {/* Hamali */}
+        <label className="edit-label-sm required">Hamali</label>
         <div className="radio-group">
           <label className="radio-option">
             <input
               type="radio"
-              name="dispatchHamali"
               value="Yes"
               checked={formData.dispatchHamali === "Yes"}
               onChange={e =>
-                setFormData(prev => ({ ...prev, dispatchHamali: e.target.value }))
+                setFormData(prev => ({
+                  ...prev,
+                  dispatchHamali: e.target.value
+                }))
               }
             />
             <span>Yes</span>
           </label>
+
           <label className="radio-option">
             <input
               type="radio"
-              name="dispatchHamali"
               value="No"
               checked={formData.dispatchHamali === "No"}
               onChange={e =>
-                setFormData(prev => ({ ...prev, dispatchHamali: e.target.value }))
+                setFormData(prev => ({
+                  ...prev,
+                  dispatchHamali: e.target.value
+                }))
               }
             />
             <span>No</span>
           </label>
         </div>
 
-        {/* Shipment Summary */}
-        <label className="edit-label-sm">Shipment Summary</label>
+        {/* Shipment */}
+        <label className="edit-label-sm">Shipment</label>
+        <InputTextarea
+          value={formData.shipment || ""}
+          onChange={e =>
+            setFormData(prev => ({
+              ...prev,
+              shipment: e.target.value
+            }))
+          }
+          rows={2}
+        />
+
+        {/* Dispatch Summary */}
+        <label className="edit-label-sm">Dispatch Summary</label>
         <InputTextarea
           value={formData.dispatchSummary || ""}
           onChange={e =>
-            setFormData(prev => ({ ...prev, dispatchSummary: e.target.value }))
+            setFormData(prev => ({
+              ...prev,
+              dispatchSummary: e.target.value
+            }))
           }
-          placeholder="Enter shipment summary"
           rows={3}
-          className="edit-input"
         />
 
-        {/* Time Required */}
+        {/* Time */}
         <label className="edit-label-sm required">Time Required (Hours)</label>
         <TimeSelect
-  value={formData.dispatchTime}
-  onChange={(value) =>
-    setFormData(prev => ({ ...prev, dispatchTime: value }))
-  }
-/>
-
-     
+          value={formData.dispatchTime}
+          onChange={(value) =>
+            setFormData(prev => ({
+              ...prev,
+              dispatchTime: value
+            }))
+          }
+        />
 
         {/* Comments */}
         <label className="edit-label-sm">Comments</label>
         <InputTextarea
           value={formData.dispatchComments || ""}
           onChange={e =>
-            setFormData(prev => ({ ...prev, dispatchComments: e.target.value }))
+            setFormData(prev => ({
+              ...prev,
+              dispatchComments: e.target.value
+            }))
           }
-          placeholder="Enter comments"
           rows={3}
-          className="edit-input"
         />
-
       </div>
     )}
   </div>

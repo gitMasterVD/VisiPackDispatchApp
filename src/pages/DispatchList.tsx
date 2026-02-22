@@ -1,5 +1,4 @@
-import React, { useState, useRef, useEffect } from "react"; 
-import { getDispatches, updateDispatch, addDispatch } from "../services/dispatchService";
+import React, { useState, useRef, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
 import "../styles/dispatch-list.css";
@@ -19,6 +18,13 @@ import {
   FiPackage,
   FiMapPin,
 } from "react-icons/fi";
+import axios from "axios";
+
+const SPREADSHEET_ID = "1P2nCUyLzWtEF9UbAsd7mY2WIIl9DRObMPD6B_TUuJ4Y";
+const RANGE = "Sheet1!A1:Z1000";
+
+const TO_BE_UPDATED = "To be updated";
+
 
 /* ================= PRIORITY CONFIG ================= */
 const priorityOrder: Record<Priority, number> = { P1: 1, P2: 2, P3: 3 };
@@ -28,8 +34,6 @@ const priorityLabels: Record<Priority, string> = {
   P2: "P2 - Medium",
   P3: "P3 - Low",
 };
-
-const TO_BE_UPDATED = "To be updated";
 
 /* ================= DATE HELPERS ================= */
 const normalizeDate = (value: any): string => {
@@ -83,6 +87,93 @@ const normalizeToYMD = (value: any): string => {
 
   return "";
 };
+const validate = (val: any) =>
+  val === undefined || val === null || String(val).trim() === ""
+    ? TO_BE_UPDATED
+    : String(val).trim();
+
+
+
+    export const getDispatches = async (): Promise<Dispatch[]> => {
+      const token = localStorage.getItem("google_token");
+      const role = sessionStorage.getItem("role");
+      if (!token) throw new Error("No Google token found");
+    
+      const res = await axios.get(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    
+      const rows = res.data.values;
+      if (!rows || rows.length < 2) return [];
+    
+      const headers = rows[0];
+      const dataRows = rows.slice(1);
+    
+      const getColumnIndex = (header: string) => headers.indexOf(header);
+    
+      const filteredData = dataRows
+        .map((row: string[], index: number) => {
+          const getValue = (header: string) => {
+            const i = getColumnIndex(header);
+            return i !== -1 ? row[i] : "";
+          };
+    
+          const priorityRaw = getValue("Priority");
+          const priority: Priority =
+            priorityRaw === "P1" || priorityRaw === "P2" || priorityRaw === "P3"
+              ? priorityRaw
+              : "P3";
+    
+          return {
+            id: String(index + 1),
+            code: validate(getValue("Item Name")),
+            po: validate(getValue("PoNo")),
+            client: validate(getValue("Client")),
+            priority,
+            status:
+              getValue("Dispatch Status") === "Closed"
+                ? "Closed"
+                : "Need Confirmation",
+            date: normalizeDate(getValue("Expected DelDate")),
+            time: validate(getValue("Time")),
+            quantity: Number(getValue("QTY")) || 0,
+            location: validate(getValue("Location/Vechile Details")),
+    
+            // role fields
+            pmPoVerified: getValue("pmPoVerified"),
+            fgMaterial: getValue("fgMaterial"),
+            qcClearance: getValue("qcClearance"),
+            itemAvailability: getValue("itemAvailability"),
+          };
+        })
+        .filter((dispatch: any) => {
+           
+          switch (role) {
+            case "fg":
+              return dispatch.pmPoVerified === "Yes";
+    
+            case "qc":
+              return dispatch.fgMaterial === "Yes";
+    
+            case "dispatch":
+              return dispatch.qcClearance === "Yes";
+    
+            case "finance":
+              return dispatch.itemAvailability === "Yes";
+    
+            default:
+              return true; // admin or other roles
+          }
+        });
+    
+      return filteredData;
+    };
+
 /* ================= COMPONENT ================= */
 const DispatchList: React.FC = () => {
   const navigate = useNavigate();
@@ -105,6 +196,112 @@ const DispatchList: React.FC = () => {
     "Need Confirmation": ["Need Confirmation"],
     Closed: ["Closed"],
   };
+  /* Optional: disable backend functions */
+  const addDispatch = async () => {
+    throw new Error("Add dispatch disabled in Google Sheets mode");
+  };
+
+  const updateDispatch = async (updatedData: any, rowIndex: number) => {
+    const token = localStorage.getItem("google_token");
+    const role = sessionStorage.getItem("role");
+  
+    if (!token) throw new Error("No Google token found");
+    if (!role) throw new Error("User role not found");
+  
+    // rowIndex starts from 0, row 1 is header
+    const actualRow = rowIndex + 2;
+  
+    /* ================= ROLE COLUMN MAPPING ================= */
+    const roleColumnMap: Record<string, string[]> = {
+      superuser: [
+        "A","B","C","D","E","F","G","H","I",
+        "J","K","L",
+        "M","N","O",
+        "P","Q","R",
+        "T","U","V","W","X","Y","Z",
+        "AA","AB","AC"
+      ],
+  
+      plantManager: ["J","K","L"],
+      fg: ["M","N","O"],
+      qc: ["P","Q","R"],
+      dispatch: ["T","U","V","W","X","Y","Z"],
+      finance: ["AA","AB","AC"]
+    };
+  
+    const allowedColumns = roleColumnMap[role] || [];
+  
+    /* ================= COLUMN VALUE MAP (FIXED) ================= */
+    const valuesMap: Record<string, any> = {
+      // MASTER
+      A: updatedData.client,
+      B: updatedData.code,
+      C: updatedData.date,
+      D: updatedData.quantity,
+      E: updatedData.location,
+      F: updatedData.status,
+      G: updatedData.time,
+      H: updatedData.po,
+      I: updatedData.priority,
+  
+      // PLANT MANAGER
+      J: updatedData.pmPoVerified,
+      K: updatedData.pmTimeRequired,
+      L: updatedData.pmComments,
+  
+      // FG
+      M: updatedData.fgMaterial,
+      N: updatedData.fgTime,
+      O: updatedData.fgComments,
+  
+      // QC
+      P: updatedData.qcClearance,
+      Q: updatedData.qcTime,
+      R: updatedData.qcComments,
+  
+      // DISPATCH
+      T: updatedData.itemAvailability,
+      U: updatedData.dispatchTime,
+      V: updatedData.vehicalAvailability,
+      W: updatedData.dispatchHamali,
+      X: updatedData.dispatchComments,
+      Y: updatedData.shipment,
+      Z: updatedData.dispatchSummary,
+  
+      // FINANCE
+      AA: updatedData.financeTime,
+      AB: updatedData.financeChallan,
+      AC: updatedData.financeComments,
+    };
+  
+    /* ================= BUILD BATCH UPDATE ================= */
+    const dataToUpdate = allowedColumns
+      .filter((col) => valuesMap[col] !== undefined && valuesMap[col] !== null)
+      .map((col) => ({
+        range: `Sheet1!${col}${actualRow}`,
+        values: [[valuesMap[col]]],
+      }));
+  
+    if (dataToUpdate.length === 0) {
+      console.error("No matching fields found for role:", role);
+      throw new Error("No allowed fields to update for this role");
+    }
+  
+    await axios.post(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values:batchUpdate`,
+      {
+        valueInputOption: "USER_ENTERED",
+        data: dataToUpdate,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  
+    return updatedData;
+  };
 
   const validate = (val: any) =>
     val === undefined || val === null || String(val).trim() === ""
@@ -125,6 +322,7 @@ const DispatchList: React.FC = () => {
     };
     fetchDispatches();
   }, []);
+
 
   /* ================= FILE UPLOAD ================= */
   const handleUploadClick = () => fileInputRef.current?.click();
@@ -157,7 +355,7 @@ const DispatchList: React.FC = () => {
       try {
         const savedDispatches: Dispatch[] = [];
         for (const d of parsed) {
-          const saved = await addDispatch(d);
+          const saved = await addDispatch();
           savedDispatches.push(saved);
         }
         setDispatches((prev) => [...prev, ...savedDispatches]);
@@ -179,15 +377,15 @@ const DispatchList: React.FC = () => {
       )
       .filter((d) => tabStatusMap[activeTab].includes(d.status))
       .filter((d) => selectedPriority === "All" || d.priority === selectedPriority)
- .filter((d) => {
-  if (!selectedDate) return true;
-  if (!d.date || d.date === TO_BE_UPDATED) return false;
+      .filter((d) => {
+        if (!selectedDate) return true;
+        if (!d.date || d.date === TO_BE_UPDATED) return false;
 
-  const selectedNormalized = normalizeToYMD(selectedDate);
-  const dispatchNormalized = normalizeToYMD(d.date);
+        const selectedNormalized = normalizeToYMD(selectedDate);
+        const dispatchNormalized = normalizeToYMD(d.date);
 
-  return selectedNormalized === dispatchNormalized;
-})
+        return selectedNormalized === dispatchNormalized;
+      })
 
 
 
@@ -207,6 +405,7 @@ const DispatchList: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+
   /* ================= UI ================= */
   return (
     <div className="dispatch-page">
@@ -221,7 +420,26 @@ const DispatchList: React.FC = () => {
               <button className="btn-add" onClick={() => navigate("/add-dispatch")}>
                 <FontAwesomeIcon icon={faPlus} />
               </button>
-              <button className="btn-logout" onClick={() => navigate("/")}>
+              <button
+                className="btn-logout"
+                onClick={() => {
+                  // Clear all stored auth/session data
+                  localStorage.removeItem("google_token");
+                  localStorage.removeItem("google_user"); // if you store user
+                  sessionStorage.clear(); // optional
+
+                  // Optional: revoke Google token
+                  if ((window as any).google?.accounts?.oauth2) {
+                    (window as any).google.accounts.oauth2.revoke(
+                      localStorage.getItem("google_token"),
+                      () => console.log("Token revoked")
+                    );
+                  }
+
+                  // Redirect to login page
+                  navigate("/");
+                }}
+              >
                 <FontAwesomeIcon icon={faRightFromBracket} />
               </button>
             </div>
@@ -271,13 +489,13 @@ const DispatchList: React.FC = () => {
 
             <div className="date-filter">
               <FiCalendar />
-             <DatePicker
-  selected={selectedDate}
-  onChange={(date: Date | null) => setSelectedDate(date)}
-  dateFormat="dd/MM/yyyy"
-  placeholderText="Select Date"
-  className="datepicker-input"
-/>
+              <DatePicker
+                selected={selectedDate}
+                onChange={(date: Date | null) => setSelectedDate(date)}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="Select Date"
+                className="datepicker-input"
+              />
 
             </div>
           </div>
@@ -303,12 +521,12 @@ const DispatchList: React.FC = () => {
             hidden
             onChange={handleFileUpload}
           />
-          
+
 
           {loading ? (
             <div className="empty-state-container">
-               <div className="loading-spinner"></div>
-    <p>Loading dispatches...</p>
+              <div className="loading-spinner"></div>
+              <p>Loading dispatches...</p>
             </div>
           ) : filteredDispatches.length === 0 ? (
             <div className="empty-state-container">
@@ -380,10 +598,14 @@ const DispatchList: React.FC = () => {
           onClose={() => setEditDispatch(null)}
           onSave={async (updated) => {
             try {
-              const saved = await updateDispatch(updated.id, updated);
+              const rowIndex = editDispatch.id - 1;
+          
+              const saved = await updateDispatch(updated, rowIndex);
+          
               setDispatches((prev) =>
                 prev.map((d) => (d.id === saved.id ? saved : d))
               );
+          
               setEditDispatch(null);
             } catch (error) {
               console.error("Failed to update dispatch", error);

@@ -30,6 +30,10 @@ pmTimeRequired?: number | null;
   qcClearance?: string | null;
   qcTime?: number | null;
   qcComments?: string;
+  itemAvailability?: string | null;       // ✅ Added
+  vehicalAvailability?: string | null;    // ✅ Added
+  shipment?: string | null;    // ✅ Added
+
 
   dispatchVehicle?: string | null;
   dispatchHamali?: string | null;
