@@ -18,14 +18,12 @@ import type { SingleValue } from "react-select";
 
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
-import { Dropdown } from "primereact/dropdown";
-
+ 
 import {
   FiChevronDown,
   FiChevronUp,
   FiLock,
-  FiCheckCircle,
-} from "react-icons/fi";
+ } from "react-icons/fi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 
@@ -141,8 +139,7 @@ const EditDispatchModal: React.FC<Props> = ({ dispatch, onClose, onSave }) => {
 
   // UI STATES
   const [statusOpen, setStatusOpen] = useState(false);
-  const [openUp, setOpenUp] = useState(false);
-  const statusRef = useRef<HTMLDivElement>(null);
+   const statusRef = useRef<HTMLDivElement>(null);
   const [openSection, setOpenSection] = useState<string | null>("master");
 
   useEffect(() => {
@@ -176,29 +173,7 @@ const EditDispatchModal: React.FC<Props> = ({ dispatch, onClose, onSave }) => {
     });
   };
 
-  const RenderRadio = (field: keyof Dispatch, label: string) => (
-    <div className="edit-group">
-      <label>{label}</label>
-      <div className="radio-container">
-        <label className="radio-option">
-          <input
-            type="radio"
-            checked={formData[field] === "Yes"}
-            onChange={() => setFormData({ ...formData, [field]: "Yes" })}
-          />
-          <span>Yes</span>
-        </label>
-        <label className="radio-option">
-          <input
-            type="radio"
-            checked={formData[field] === "No"}
-            onChange={() => setFormData({ ...formData, [field]: "No" })}
-          />
-          <span>No</span>
-        </label>
-      </div>
-    </div>
-  );
+   
 
   return (
     <div className="edit-overlay" onClick={onClose}>

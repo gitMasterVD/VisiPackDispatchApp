@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import * as XLSX from "xlsx";
-import { useNavigate } from "react-router-dom";
+ import { useNavigate } from "react-router-dom";
 import "../styles/dispatch-list.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUpload, faPlus, faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
@@ -196,10 +195,7 @@ const DispatchList: React.FC = () => {
     "Need Confirmation": ["Need Confirmation"],
     Closed: ["Closed"],
   };
-  /* Optional: disable backend functions */
-  const addDispatch = async () => {
-    throw new Error("Add dispatch disabled in Google Sheets mode");
-  };
+  
 
   const updateDispatch = async (updatedData: any, rowIndex: number) => {
     const token = localStorage.getItem("google_token");
@@ -303,10 +299,7 @@ const DispatchList: React.FC = () => {
     return updatedData;
   };
 
-  const validate = (val: any) =>
-    val === undefined || val === null || String(val).trim() === ""
-      ? TO_BE_UPDATED
-      : String(val).trim();
+ 
 
   /* ================= LOAD DISPATCHES ================= */
   useEffect(() => {
@@ -331,39 +324,7 @@ const DispatchList: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = async (event) => {
-      const data = new Uint8Array(event.target?.result as ArrayBuffer);
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-
-      const parsed: Omit<Dispatch, "id">[] = rows.map((row) => ({
-        code: validate(row["Item Name"]),
-        po: validate(row["PoNo"]),
-        client: validate(row["Client"]),
-        priority: ["P1", "P2", "P3"].includes(row["Priority"]) ? row["Priority"] : "P3",
-        status:
-          row["Dispatch Status"] === "Closed"
-            ? "Closed"
-            : "Need Confirmation",
-        date: normalizeDate(row["Expected DelDate"]) || TO_BE_UPDATED,
-        time: validate(row["Time"]),
-        quantity: validate(row["QTY"]),
-        location: validate(row["Location/Vechile Details"]),
-      }));
-
-      try {
-        const savedDispatches: Dispatch[] = [];
-        for (const d of parsed) {
-          const saved = await addDispatch();
-          savedDispatches.push(saved);
-        }
-        setDispatches((prev) => [...prev, ...savedDispatches]);
-      } catch (error) {
-        console.error("Failed to upload dispatches", error);
-        alert("Failed to upload dispatches. Please try again.");
-      }
-    };
+     
     reader.readAsArrayBuffer(file);
   };
 
