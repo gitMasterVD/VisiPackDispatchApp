@@ -464,3 +464,81 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+.clear-date {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #7b7b7b;
+  margin-left: 4px;
+  padding: 0;
+  line-height: 1;
+}
+
+.clear-date:hover {
+  color: #1e40af; /* professional blue hover */
+}
+/* .datepicker-input {
+  padding: 6px 30px 6px 10px; 
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background-color: #f8fafc;
+  font-size: 14px;
+  color: #1e293b;
+  transition: border 0.2s;
+} */
+
+.datepicker-input:focus {
+  border-color: #0f4c81;
+  outline: none;
+}
+
+.datepicker-input {
+  width: 100%;
+  min-width: 0; /* allow flex container to shrink properly */
+  padding: 6px 30px 6px 10px; /* space for icon */
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background-color: #f8fafc;
+  color: #1e293b;
+  box-sizing: border-box;
+}
+
+
+
+
+
+
+/* dispatch-list.css */
+
+/* Ensure the date filter container is wide enough */
+.date-filter {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 180px; /* Adjust as needed for tablets */
+}
+
+/* Make the input take remaining space */
+.date-filter .datepicker-input {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 14px;
+  border-radius: 4px;
+  border: none;
+  width: 100%;
+  min-width: 100px; /* prevents input from shrinking too much */
+  box-sizing: border-box;
+}
+
+/* Clear button styling */
+.date-filter .clear-date {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #555;
+}

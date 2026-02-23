@@ -184,12 +184,14 @@ const DispatchList: React.FC = () => {
   const [search, setSearch] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<"All" | Priority>("All");
   const [activeTab, setActiveTab] = useState<"Need Confirmation" | "Closed">("Need Confirmation");
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-
+  // const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
   const [selectedDispatch, setSelectedDispatch] = useState<Dispatch | null>(null);
   const [editDispatch, setEditDispatch] = useState<Dispatch | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  
 
   const tabStatusMap: Record<"Need Confirmation" | "Closed", Dispatch["status"][]> = {
     "Need Confirmation": ["Need Confirmation"],
@@ -418,7 +420,7 @@ const DispatchList: React.FC = () => {
 
             <div className="priority-dropdown" ref={dropdownRef}>
               <div className="dropdown-header" onClick={() => setDropdownOpen(!dropdownOpen)}>
-                <span>{selectedPriority === "All" ? "Priority" : priorityLabels[selectedPriority]}</span>
+                <span>{selectedPriority === "All" ? "All Priorities" : priorityLabels[selectedPriority]}</span>
                 <FiChevronDown />
               </div>
               {dropdownOpen && (
@@ -448,7 +450,7 @@ const DispatchList: React.FC = () => {
               )}
             </div>
 
-            <div className="date-filter">
+            {/* <div className="date-filter">
               <FiCalendar />
               <DatePicker
                 selected={selectedDate}
@@ -458,7 +460,27 @@ const DispatchList: React.FC = () => {
                 className="datepicker-input"
               />
 
-            </div>
+            </div> */}
+            <div className="date-filter">
+  <FiCalendar />
+
+  <DatePicker
+    selected={selectedDate}
+    onChange={(date: Date | null) => setSelectedDate(date)}
+    dateFormat="dd/MM/yyyy"
+    placeholderText="Filter by Expected Delivery Date"
+    className="datepicker-input"
+  />
+  {selectedDate && (
+    <button
+      className="clear-date"
+      onClick={() => setSelectedDate(null)}
+      title="Clear Date"
+    >
+      ×
+    </button>
+  )}
+</div>
           </div>
 
           <div className="tabs pill">
